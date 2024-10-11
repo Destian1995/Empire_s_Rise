@@ -1,4 +1,5 @@
-![image](https://github.com/user-attachments/assets/e7e88b26-4609-4195-aa2a-0bfbb7309e88)
+![image](https://github.com/user-attachments/assets/29348305-8928-4e4c-aa45-f4a5f8e8a238)
+
 
 
 ### План разработки игры:
