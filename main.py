@@ -69,6 +69,47 @@ territory_owners = {
         "towns": ["Этерия"] * len(kingdom_points["Этерия"]["towns"])
     }
 }
+class HallOfFameWidget(FloatLayout):
+    def __init__(self, **kwargs):
+        super(HallOfFameWidget, self).__init__(**kwargs)
+        self.add_widget(Image(source='files/menu.jpg', allow_stretch=True, keep_ratio=False))  # Фон зала славы
+
+        # Заголовок
+        title = Label(text="[b][color=000000]Зал славы[/color][/b]", font_size='40sp', markup=True,
+                      size_hint=(1, 0.2), pos_hint={'center_x': 0.5, 'center_y': 0.9})
+        self.add_widget(title)
+
+        # Поле для вывода лучших результатов
+        self.results_label = Label(text=self.get_top_scores(), font_size='30sp', markup=True, halign="center",
+                                   size_hint=(0.8, 0.6), pos_hint={'center_x': 0.5, 'center_y': 0.5}, color=(0, 0, 0, 5))
+        self.add_widget(self.results_label)
+
+        # Кнопка "Назад"
+        btn_back = Button(text="Назад", size_hint=(0.3, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.1},
+                          background_normal='', background_color=(0, 0, 0, 1))
+        btn_back.bind(on_press=self.go_back)
+        self.add_widget(btn_back)
+
+    def get_top_scores(self):
+        # Заглушка для топ-10 лучших результатов, можно заменить на реальную логику
+        top_scores = [
+            "1. Игрок1 - 9999 очков",
+            "2. Игрок2 - 9500 очков",
+            "3. Игрок3 - 9200 очков",
+            "4. Игрок4 - 9000 очков",
+            "5. Игрок5 - 8900 очков",
+            "6. Игрок6 - 8700 очков",
+            "7. Игрок7 - 8500 очков",
+            "8. Игрок8 - 8300 очков",
+            "9. Игрок9 - 8000 очков",
+            "10. Игрок10 - 7800 очков",
+        ]
+        return "\n".join(top_scores)
+
+    def go_back(self, instance):
+        app = App.get_running_app()
+        app.root.clear_widgets()
+        app.root.add_widget(MenuWidget())
 
 # Виджет карты
 class MapWidget(Widget):
@@ -138,52 +179,45 @@ class MenuWidget(FloatLayout):
         super(MenuWidget, self).__init__(**kwargs)
         self.add_widget(Image(source='files/menu.jpg', allow_stretch=True, keep_ratio=False))  # Фон меню
 
-        # Заголовок с 3D эффектом
-        title = Label(text="[b][color=000000]Расцвет Империи[/color][/b]", font_size='40sp', markup=True, size_hint=(1, 0.2),
-                      pos_hint={'center_x': 0.5, 'center_y': 0.9})
+        # Заголовок
+        title = Label(text="[b][color=000000]Расцвет Империи[/color][/b]", font_size='40sp', markup=True,
+                      size_hint=(1, 0.2), pos_hint={'center_x': 0.5, 'center_y': 0.9})
         self.add_widget(title)
 
         # Кнопки
         btn_start_game = Button(text="Старт новой игры", size_hint=(0.5, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.7},
                                 background_normal='', background_color=(0, 0, 0, 1))
-        btn_start_game.bind(on_press=self.start_game, on_enter=self.on_enter, on_leave=self.on_leave)
+        btn_start_game.bind(on_press=self.start_game)
 
-        btn_load_game = Button(text="Загрузка ранее сохраненной", size_hint=(0.5, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.5},
-                               background_normal='', background_color=(0, 0, 0, 1))
-        btn_load_game.bind(on_press=self.load_game, on_enter=self.on_enter, on_leave=self.on_leave)
+        btn_load_game = Button(text="Загрузка ранее сохраненной", size_hint=(0.5, 0.1),
+                               pos_hint={'center_x': 0.5, 'center_y': 0.5}, background_normal='', background_color=(0, 0, 0, 1))
+        btn_load_game.bind(on_press=self.load_game)
 
-        btn_settings = Button(text="Настройки", size_hint=(0.5, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.3},
-                              background_normal='', background_color=(0, 0, 0, 1))
-        btn_settings.bind(on_press=self.open_settings, on_enter=self.on_enter, on_leave=self.on_leave)
+        btn_hall_of_fame = Button(text="Зал славы", size_hint=(0.5, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.3},
+                                  background_normal='', background_color=(0, 0, 0, 1))
+        btn_hall_of_fame.bind(on_press=self.show_hall_of_fame)
 
         btn_exit = Button(text="Выход", size_hint=(0.5, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.1},
                           background_normal='', background_color=(0, 0, 0, 1))
-        btn_exit.bind(on_press=self.exit_game, on_enter=self.on_enter, on_leave=self.on_leave)
+        btn_exit.bind(on_press=self.exit_game)
 
         self.add_widget(btn_start_game)
         self.add_widget(btn_load_game)
-        self.add_widget(btn_settings)
+        self.add_widget(btn_hall_of_fame)
         self.add_widget(btn_exit)
 
-    def on_enter(self, instance):
-        instance.background_color = (1, 0.5, 0, 1)
-
-    def on_leave(self, instance):
-        instance.background_color = (0, 0, 0, 1)
-
     def start_game(self, instance):
-        # Замените это на логику для начала новой игры
         app = App.get_running_app()
         app.root.clear_widgets()
         app.root.add_widget(KingdomSelectionWidget())
 
     def load_game(self, instance):
-        # Замените это на логику для загрузки игры
         print("Загрузка игры...")
 
-    def open_settings(self, instance):
-        # Замените это на логику открытия настроек
-        print("Настройки...")
+    def show_hall_of_fame(self, instance):
+        app = App.get_running_app()
+        app.root.clear_widgets()
+        app.root.add_widget(HallOfFameWidget())
 
     def exit_game(self, instance):
         App.get_running_app().stop()
@@ -258,9 +292,9 @@ class KingdomSelectionWidget(FloatLayout):
                         "Армия: 7\n"
                         "Диломатия: 7\n",
             "Хиперион": "Хиперион - западная империя. \n"
-                        'Экономика: 7\n'
+                        'Экономика: 8\n'
                         'Армия: 10\n'
-                        'Дипломатия: 4\n',
+                        'Дипломатия: 3\n',
             "Халидон": "Халидон - юго-восточное княжество\n"
                         'Экономика: 6\n'
                         'Армия: 5\n'
