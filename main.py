@@ -8,7 +8,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Color, Rectangle, Line
 from kivy.uix.textinput import TextInput
-
+from game_process import GameScreen
 
 # Размеры окна
 screen_width, screen_height = 1200, 800
@@ -163,15 +163,7 @@ class MapWidget(Widget):
             Rectangle(source='files/map/map.png', pos=self.map_pos, size=(screen_width, screen_height))
             self.draw_map()
 
-    def capture_territory(self, kingdom, territory_type, index, new_owner):
-        """Функция для захвата города или крепости"""
-        if territory_type == "fortresses":
-            territory_owners[kingdom]["fortresses"][index] = new_owner
-        elif territory_type == "towns":
-            territory_owners[kingdom]["towns"][index] = new_owner
 
-        # Обновляем карту
-        self.update_map_position()
 
 # Меню
 class MenuWidget(FloatLayout):
@@ -267,7 +259,11 @@ class KingdomSelectionWidget(FloatLayout):
         selected_kingdom = instance.text
         self.kingdom_info_box.text = self.get_kingdom_info(selected_kingdom)
 
-        # Правильное сопоставление названий княжеств и файлов изображений
+        # Сохраняем выбранное княжество
+        app = App.get_running_app()
+        app.selected_kingdom = selected_kingdom  # Сохранение в атрибут
+
+        # Получение изображения советника
         kingdom_map = {
             "Аркадия": "arkadia",
             "Селестия": "celestia",
@@ -275,11 +271,10 @@ class KingdomSelectionWidget(FloatLayout):
             "Хиперион": "giperion",
             "Халидон": "halidon"
         }
-
         advisor_image_filename = kingdom_map.get(selected_kingdom, "").lower()
         if advisor_image_filename:
-            self.advisor_image.source = f'files/sov/sov_{advisor_image_filename}.jpg'
-            self.advisor_image.reload()
+              self.advisor_image.source = f'files/sov/sov_{advisor_image_filename}.jpg'
+              self.advisor_image.reload()
 
     def get_kingdom_info(self, kingdom):
         info = {
@@ -291,7 +286,7 @@ class KingdomSelectionWidget(FloatLayout):
                         "Экономика: 7\n"
                         "Армия: 7\n"
                         "Диломатия: 7\n",
-            "Хиперион": "Хиперион - западная империя. \n"
+            "Хиперион": "Хиперион - средиземная империя. \n"
                         'Экономика: 8\n'
                         'Армия: 10\n'
                         'Дипломатия: 3\n',
@@ -308,16 +303,23 @@ class KingdomSelectionWidget(FloatLayout):
 
     def start_game(self, instance):
         app = App.get_running_app()
+        selected_kingdom = app.selected_kingdom
+        if selected_kingdom is None:
+            print("Фракция не выбрана. Пожалуйста, выберите фракцию перед началом игры.")
+            return
+
+        game_screen = GameScreen(selected_kingdom)  # Передаем выбранное княжество
         app.root.clear_widgets()
         app.root.add_widget(MapWidget())
-
-
+        app.root.add_widget(game_screen)
 
 # Основное приложение
 class EmpireApp(App):
     def build(self):
         return MenuWidget()
 
-# Запуск приложения
-if __name__ == '__main__':
+class EmpireApp(App):
+    def __init__(self, **kwargs):
+        super(EmpireApp, self).__init__(**kwargs)# Запуск приложения
+        self.selected_kingdom = None  # Инициализация атрибутаif __name__ == '__main__':
     EmpireApp().run()
