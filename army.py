@@ -12,9 +12,9 @@ def start_army_mode(faction, game_area):
     # Кнопки для управления армией
     army_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), pos_hint={'x': 0, 'y': 0})
 
-    train_btn = Button(text="Тренировать войска", size_hint_x=0.33, size_hint_y=None, height=50)
-    attack_btn = Button(text="Атаковать врага", size_hint_x=0.33, size_hint_y=None, height=50)
-    defend_btn = Button(text="Защищать территорию", size_hint_x=0.33, size_hint_y=None, height=50)
+    train_btn = Button(text="Тренировка войск", size_hint_x=0.33, size_hint_y=None, height=50)
+    attack_btn = Button(text="Расквартировка", size_hint_x=0.33, size_hint_y=None, height=50)
+    defend_btn = Button(text="Выдвижение войск", size_hint_x=0.33, size_hint_y=None, height=50)
 
     army_layout.add_widget(train_btn)
     army_layout.add_widget(attack_btn)

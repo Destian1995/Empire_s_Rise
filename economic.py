@@ -24,9 +24,9 @@ def start_economy_mode(faction, game_area):
     # Кнопки для управления экономикой
     economy_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), pos_hint={'x': 0, 'y': 0})
 
-    build_btn = Button(text="Построить здание", size_hint_x=0.33, size_hint_y=None, height=50)
-    trade_btn = Button(text="Торговать", size_hint_x=0.33, size_hint_y=None, height=50)
-    expand_btn = Button(text="Расширить территорию", size_hint_x=0.33, size_hint_y=None, height=50)
+    build_btn = Button(text="Строительство", size_hint_x=0.33, size_hint_y=None, height=50)
+    trade_btn = Button(text="Торговля", size_hint_x=0.33, size_hint_y=None, height=50)
+    expand_btn = Button(text="Налоги", size_hint_x=0.33, size_hint_y=None, height=50)
 
     economy_layout.add_widget(build_btn)
     economy_layout.add_widget(trade_btn)
