@@ -102,3 +102,5 @@ class GameScreen(Screen):
         for faction, ai_controller in self.ai_controllers.items():
             ai_controller.process_turn()
             print(f"Ход ИИ {faction}")
+
+
