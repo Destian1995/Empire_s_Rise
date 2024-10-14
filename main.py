@@ -318,7 +318,7 @@ class EmpireApp(App):
     def build(self):
         return MenuWidget()
 
-class EmpireApp(App):
+class Main(App):
     def __init__(self, **kwargs):
         super(EmpireApp, self).__init__(**kwargs)# Запуск приложения
         self.selected_kingdom = None  # Инициализация атрибутаif __name__ == '__main__':
