@@ -6,9 +6,12 @@ from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.graphics import Color, Ellipse, Rectangle
 
-# Файл, который включает режимы игры
 import economic
+# Файл, который включает режимы игры
+from economic import Faction
+from resources import ResourceManager
 import army
 import politic
 from ii import AIController
@@ -16,25 +19,74 @@ from ii import AIController
 # Список всех фракций
 FACTIONS = ["Аркадия", "Селестия", "Хиперион", "Халидон", "Этерия"]
 
+
+class ResourceBox(BoxLayout):
+    def __init__(self, resource_manager, **kwargs):
+        super(ResourceBox, self).__init__(**kwargs)
+        self.resource_manager = resource_manager
+        self.orientation = 'horizontal'
+        self.size_hint = (0.8, 0.14)
+        self.pos_hint = {'center_x': 0.36, 'center_y': 1}
+        self.padding = [5, 5, 5, 0]
+        self.spacing = 0
+
+        with self.canvas.before:
+            Color(0.2, 0.2, 0.2, 1)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.bind(size=self.update_rect, pos=self.update_rect)
+
+        # Сохраняем метки для ресурсов, чтобы обновлять их при изменении значений
+        self.labels = {}
+        self.update_resources()
+
+    def update_rect(self, *args):
+        self.rect.size = self.size
+        self.rect.pos = self.pos
+
+    def update_resources(self):
+        """Обновление отображаемых ресурсов"""
+        self.resource_manager.update_resources()
+        resources = self.resource_manager.get_resources()
+
+        for resource_name, value in resources.items():
+            if resource_name in self.labels:
+                # Обновляем текст существующей метки
+                self.labels[resource_name].text = f"{resource_name}: {value}"
+            else:
+                # Создаем новую метку, если она не существует
+                label = Label(
+                    text=f"{resource_name}: {value}",
+                    size_hint_y=None,
+                    height=35,
+                    color=(1, 1, 1, 1)
+                )
+                self.labels[resource_name] = label
+                self.add_widget(label)
+
+
 # Класс для кнопки с изображением
 class ImageButton(ButtonBehavior, Image):
     pass
+
 
 class GameScreen(Screen):
     def __init__(self, selected_faction, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
         self.selected_faction = selected_faction
+        self.faction = Faction(selected_faction)
+        self.resource_manager = ResourceManager(selected_faction)  # Создаем экземпляр ResourceManager
         self.ai_controllers = {}
         self.init_ui()
 
     def init_ui(self):
-        # Верхняя панель с выбранной фракцией
+        # панель с выбранной фракцией
         self.faction_label = Label(
             text=f"{self.selected_faction}",
             font_size='30sp',
             size_hint=(1, 0.1),
-            pos_hint={'top': 1},
-            color=(0, 0, 0, 1))  # Черный цвет текста
+            pos_hint={'right': 1, 'top': 0.95},
+            color=(0, 0, 0, 1)  # Черный цвет текста
+        )
         self.add_widget(self.faction_label)
 
         # Боковая панель с кнопками режимов
@@ -59,19 +111,48 @@ class GameScreen(Screen):
         end_turn_button = Button(
             text="Завершить ход",
             size_hint=(None, None),
-            size=(200, 50),
+            size=(190, 43),
             pos_hint={'right': 1, 'top': 1},
             on_press=self.process_turn
         )
         self.add_widget(end_turn_button)
 
+        # Добавление ResourceBox в верхний правый угол, передаем resource_manager
+        self.resource_box = ResourceBox(resource_manager=self.resource_manager)
+        self.add_widget(self.resource_box)
+
         # Инициализация ИИ для остальных фракций
         self.init_ai_controllers()
+
+    def process_turn(self, instance=None):
+        """Обработка хода игрока и ИИ"""
+        # Обновляем ресурсы
+        self.resource_manager.update_resources()
+
+        # Перерисовываем ресурсы
+        self.update_resource_box()
+
+        # Ход игрока (ожидание действий)
+        print(f"Ход {self.selected_faction}")
+
+        # Ходы ИИ для остальных фракций
+        for faction, ai_controller in self.ai_controllers.items():
+            ai_controller.process_turn()
+            print(f"Ход ИИ {faction}")
+
+    def update_resource_box(self):
+        """Обновление ресурсов в интерфейсе после завершения хода"""
+        # Очищаем текущий ResourceBox
+        self.remove_widget(self.resource_box)
+
+        # Пересоздаем ResourceBox с обновленными ресурсами
+        self.resource_box = ResourceBox(resource_manager=self.resource_manager)
+        self.add_widget(self.resource_box)
 
     def switch_to_economy(self, instance):
         """Переключение на экономический режим"""
         self.clear_game_area()
-        economic.start_economy_mode(self.selected_faction, self.game_area)
+        economic.start_economy_mode(self.faction, self.game_area)
 
     def switch_to_army(self, instance):
         """Переключение на армейский режим"""
@@ -95,6 +176,12 @@ class GameScreen(Screen):
 
     def process_turn(self, instance=None):
         """Обработка хода игрока и ИИ"""
+        # Обновляем ресурсы
+        self.resource_manager.update_resources()
+
+        # Обновляем отображение ресурсов без пересоздания ResourceBox
+        self.resource_box.update_resources()
+
         # Ход игрока (ожидание действий)
         print(f"Ход {self.selected_faction}")
 
@@ -102,5 +189,4 @@ class GameScreen(Screen):
         for faction, ai_controller in self.ai_controllers.items():
             ai_controller.process_turn()
             print(f"Ход ИИ {faction}")
-
 

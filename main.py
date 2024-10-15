@@ -6,7 +6,6 @@ from kivy.uix.label import Label
 from kivy.uix.image import Image
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
-from kivy.graphics import Color, Rectangle, Line
 from kivy.uix.textinput import TextInput
 from game_process import GameScreen
 from ui import *
@@ -112,6 +111,7 @@ class HallOfFameWidget(FloatLayout):
         app.root.clear_widgets()
         app.root.add_widget(MenuWidget())
 
+
 class MapWidget(Widget):
     def __init__(self, selected_kingdom=None, player_kingdom=None, **kwargs):
         super(MapWidget, self).__init__(**kwargs)
@@ -163,18 +163,6 @@ class MapWidget(Widget):
 
                 print(f"Крепость {fortress_pos} принадлежит {'вашему' if owner == self.current_player_kingdom else 'чужому'} королевству!")
 
-                if owner == self.current_player_kingdom:
-                    self.open_player_fortress_options(fortress_pos)
-                else:
-                    self.open_enemy_fortress_options(fortress_pos)
-
-    def open_player_fortress_options(self, fortress_pos):
-        # Здесь добавьте логику для открытия окна с возможностями для своих крепостей
-        print(f"Открыто окно с возможностями для крепости {fortress_pos} вашего королевства.")
-
-    def open_enemy_fortress_options(self, fortress_pos):
-        # Здесь добавьте логику для открытия окна с возможностями для чужих крепостей
-        print(f"Открыто окно с возможностями для крепости {fortress_pos} чужого королевства.")
 
     def on_touch_down(self, touch):
         # Запоминаем начальную точку касания
@@ -218,7 +206,6 @@ class MapWidget(Widget):
     def draw_map(self):
         with self.canvas:
             Rectangle(source='files/map/map.png', pos=self.map_pos, size=(screen_width, screen_height))
-
 
 # Меню
 class MenuWidget(FloatLayout):
