@@ -93,6 +93,8 @@ def start_economy_mode(faction, game_area):
 
 def open_tax_popup(faction):
     """Открытие попапа для управления налогами"""
+    # Расчет ставки дохода с одного человека с учетом уровня налогов
+    new_tax_rate = faction.income_per_person*(faction.taxes/10)
 
     # Создаем попап для налогов
     tax_popup = Popup(title="Управление налогами", size_hint=(0.8, 0.8))
@@ -104,19 +106,20 @@ def open_tax_popup(faction):
     tax_label = Label(text=f"Уровень налогов: {faction.taxes}%", size_hint_y=None, height=44)
     main_layout.add_widget(tax_label)
 
-    # Метка для отображения дохода с одного человека
-    income_label = Label(text=f"Доход с одного человека: {faction.income_per_person}", size_hint_y=None, height=44)
-    main_layout.add_widget(income_label)
-
     # Слайдер для установки уровня налогов
     tax_slider = Slider(min=0, max=100, value=faction.taxes)
     main_layout.add_widget(tax_slider)
 
+    # Метка для отображения дохода с одного человека
+    income_label = Label(text=f"Доход с одного человека: {new_tax_rate}", size_hint_y=None, height=44)
+    main_layout.add_widget(income_label)
+
     # Функция обновления меток при изменении значения слайдера
     def update_tax_label(instance, value):
+        new_tax_rate = faction.income_per_person*(faction.taxes/10)
         faction.set_taxes(value)  # Устанавливаем новые налоги
         tax_label.text = f"Уровень налогов: {int(value)}%"
-        income_label.text = f"Доход с одного человека: {faction.income_per_person:.2f}"  # Обновляем доход с одного гражданина
+        income_label.text = f"Доход с одного человека: {new_tax_rate:.2f}"  # Обновляем доход с одного гражданина
 
 
     # Привязываем обновление меток к слайдеру

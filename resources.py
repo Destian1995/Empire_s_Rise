@@ -2,10 +2,10 @@ class ResourceManager:
     def __init__(self, faction):
         self.faction = faction
         self.resources = {
-            "Деньги": 1000,
-            "Свободные люди": 50,
-            "Еда": 300,
-            "Население": 70
+            "Деньги": 250,
+            "Свободные люди": 30,
+            "Еда": 400,
+            "Население": 40
         }
         self.economic_params = {
             "Аркадия": {
@@ -43,13 +43,13 @@ class ResourceManager:
     def get_income_per_person(self):
         """Получение дохода с одного человека для данной фракции."""
         params = self.economic_params[self.faction]
-        return params["tax_rate"]  # Преобразуем ставку в коэффициент (1% -> 0.1, 100% -> 10)
+        return params["tax_rate"]
 
 
     def calculate_tax_income(self):
         """Расчет дохода от налогов с учетом ставки налога."""
         params = self.economic_params[self.faction]
-        tax_rate = params["tax_rate"] / 10  # Преобразуем ставку в коэффициент (1% -> 0.1, 100% -> 10)
+        tax_rate = params["tax_rate"]
         taxes = self.resources["Население"] * tax_rate
         return taxes
 
