@@ -1,11 +1,17 @@
+import economic
+
 class ResourceManager:
     def __init__(self, faction):
         self.faction = faction
+        self.money = 250
+        self.free_people = 30
+        self.food = 400
+        self.population = 40
         self.resources = {
-            "Деньги": 250,
-            "Свободные люди": 30,
-            "Еда": 400,
-            "Население": 40
+            "Деньги": self.money,
+            "Свободные люди": self.free_people,
+            "Еда": self.food,
+            "Население": self.population
         }
         self.economic_params = {
             "Аркадия": {
@@ -45,12 +51,10 @@ class ResourceManager:
         params = self.economic_params[self.faction]
         return params["tax_rate"]
 
-
     def calculate_tax_income(self):
         """Расчет дохода от налогов с учетом ставки налога."""
-        params = self.economic_params[self.faction]
-        tax_rate = params["tax_rate"]
-        taxes = self.resources["Население"] * tax_rate
+        tax_rate = self.get_income_per_person()  # Получаем налоговую ставку
+        taxes = self.population * (tax_rate / 10)  # Делаем расчёт с использованием этой ставки
         return taxes
 
     def update_resources(self):
@@ -59,6 +63,7 @@ class ResourceManager:
 
         # Прирост свободных людей от больницы
         self.resources["Свободные люди"] += params["hospital"]["gain_people"]
+        self.resources["Население"] += params["hospital"]["gain_people"]
         self.resources["Деньги"] -= params["hospital"]["cost_money"]
 
         # Прирост еды от фабрики
@@ -71,9 +76,6 @@ class ResourceManager:
 
         # Расчет налогов
         self.resources["Деньги"] += self.calculate_tax_income()
-
-        # Обновление общего населения
-        self.resources["Население"] = self.resources["Свободные люди"]
 
     def get_resources(self):
         """Получение текущих ресурсов"""

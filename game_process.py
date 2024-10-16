@@ -70,10 +70,10 @@ class ImageButton(ButtonBehavior, Image):
 
 
 class GameScreen(Screen):
-    def __init__(self, selected_faction, **kwargs):
+    def __init__(self, selected_faction, cities, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
         self.selected_faction = selected_faction
-        self.faction = Faction(selected_faction)
+        self.faction = Faction(selected_faction, cities)
         self.resource_manager = ResourceManager(selected_faction)  # Создаем экземпляр ResourceManager
         self.ai_controllers = {}
         self.init_ui()

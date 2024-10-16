@@ -33,8 +33,11 @@ kingdom_points = {
         "towns": [(90, 100), (30, 180), (100, 230), (120, 350), (130, 320), (250, 160), (270, 200)]
     },
     "Хиперион": {
-        "fortresses": [(523, 505),(410, 120), (410, 320), (510, 200), (310, 170), (520, 620), (750, 540), (660, 380), (890, 520), (760, 150), (790, 300), (940, 660)],
-        "towns": [(220, 240), (640, 180), (560, 300), (580, 660), (600, 400), (700, 500), (800, 300), (750, 240)]
+        "fortresses": [(523, 505), (410, 120), (410, 320), (510, 200), (310, 170),
+                       (520, 620), (750, 540), (660, 380), (890, 520), (760, 150),
+                       (790, 300), (940, 660)],
+        "towns": [(220, 240), (640, 180), (560, 300), (580, 660), (600, 400),
+                  (700, 500), (800, 300), (750, 240)]
     },
     "Халидон": {
         "fortresses": [(820, 160), (940, 280), (1020, 100), (1000, 480)],
@@ -46,29 +49,42 @@ kingdom_points = {
     }
 }
 
+# Уникальные названия крепостей для каждого княжества
+fortress_names = {
+    "Аркадия": ['(80, 460)', '(100, 630)', '(400, 500)', '(370, 600)', '(200, 560)'],
+    "Селестия": ['(130, 400)', '(260, 140)', '(100, 250)', '(190, 220)'],
+    "Хиперион": ['(523, 505)', '(410, 120)', '(410, 320)', '(510, 200)', '(310, 170)',
+                 '(520, 620)','(750, 540)', '(660, 380)', '(890, 520)', '(760, 150)',
+                 ' (790, 300)', '(940, 660)'],
+    "Халидон": ['(820, 160)', '(940, 280)', '(1020, 100)', '(1000, 480)'],
+    "Этерия": ['(960, 370)', '(1090, 660)', '(1120, 310)', '(1070, 500)']
+}
+
 # Владелец каждой крепости и города
 territory_owners = {
     "Аркадия": {
-        "fortresses": ["Аркадия"] * len(kingdom_points["Аркадия"]["fortresses"]),
+        "fortresses": fortress_names["Аркадия"],
         "towns": ["Аркадия"] * len(kingdom_points["Аркадия"]["towns"])
     },
     "Селестия": {
-        "fortresses": ["Селестия"] * len(kingdom_points["Селестия"]["fortresses"]),
+        "fortresses": fortress_names["Селестия"],
         "towns": ["Селестия"] * len(kingdom_points["Селестия"]["towns"])
     },
     "Хиперион": {
-        "fortresses": ["Хиперион"] * len(kingdom_points["Хиперион"]["fortresses"]),
+        "fortresses": fortress_names["Хиперион"],
         "towns": ["Хиперион"] * len(kingdom_points["Хиперион"]["towns"])
     },
     "Халидон": {
-        "fortresses": ["Халидон"] * len(kingdom_points["Халидон"]["fortresses"]),
+        "fortresses": fortress_names["Халидон"],
         "towns": ["Халидон"] * len(kingdom_points["Халидон"]["towns"])
     },
     "Этерия": {
-        "fortresses": ["Этерия"] * len(kingdom_points["Этерия"]["fortresses"]),
+        "fortresses": fortress_names["Этерия"],
         "towns": ["Этерия"] * len(kingdom_points["Этерия"]["towns"])
     }
 }
+
+
 class HallOfFameWidget(FloatLayout):
     def __init__(self, **kwargs):
         super(HallOfFameWidget, self).__init__(**kwargs)
@@ -127,7 +143,6 @@ class MapWidget(Widget):
         # Отрисовка крепостей
         self.draw_fortresses()
 
-
     def set_player_kingdom(self, kingdom_name):
         """Метод для установки и запоминания выбранной фракции."""
         self.selected_kingdom = kingdom_name
@@ -137,22 +152,29 @@ class MapWidget(Widget):
     def draw_fortresses(self):
         # Очищаем список прямоугольников крепостей перед новой отрисовкой
         self.fortress_rectangles.clear()
+        self.canvas.clear()  # Очищаем канвас перед новой отрисовкой
 
         with self.canvas:
+            # Отрисовываем фон карты заново
+            self.map_image = Rectangle(source='files/map/map.png', pos=self.map_pos, size=(screen_width, screen_height))
+
             for kingdom, points in kingdom_points.items():
+                # Получаем цвет для текущего королевства
+                fortress_color = fortress_colors[kingdom]
                 for i, fortress in enumerate(points["fortresses"]):
-                    owner = territory_owners[kingdom]["fortresses"][i]
-                    Color(*fortress_colors[owner])  # Используем цвет владельца
-                    fort_x = fortress[0] + self.map_pos[0] - 10  # Смещаем по X
-                    fort_y = fortress[1] + self.map_pos[1] - 10  # Смещаем по Y
+                    # Устанавливаем цвет для крепости
+                    Color(*fortress_color)
+
+                    # Расчет позиции крепости с учетом смещения карты
+                    fort_x = fortress[0] + self.map_pos[0] - 10  # Смещение по X
+                    fort_y = fortress[1] + self.map_pos[1] - 10  # Смещение по Y
 
                     # Сохраняем прямоугольник и владельца для проверки касания
                     fort_rect = (fort_x, fort_y, 20, 20)  # (x, y, width, height)
-                    self.fortress_rectangles.append((fort_rect, fortress, owner))
+                    self.fortress_rectangles.append((fort_rect, fortress, kingdom))
 
                     # Рисуем крепость
-                    Ellipse(pos=(fort_x + 10, fort_y + 10), size=(20, 20))  # Центрируем крепость
-
+                    Ellipse(pos=(fort_x + 10, fort_y + 10), size=(20, 20))
     def check_fortress_click(self, touch):
         # Проверяем, была ли нажата крепость
         for fort_rect, fortress_pos, owner in self.fortress_rectangles:
@@ -373,9 +395,9 @@ class KingdomSelectionWidget(FloatLayout):
         if selected_kingdom is None:
             print("Фракция не выбрана. Пожалуйста, выберите фракцию перед началом игры.")
             return
-
+        cities = territory_owners[selected_kingdom]["fortresses"]
         # Передаем выбранное княжество на новый экран игры
-        game_screen = GameScreen(selected_kingdom)
+        game_screen = GameScreen(selected_kingdom, cities)
         app.root.clear_widgets()
         app.root.add_widget(MapWidget(selected_kingdom=selected_kingdom, player_kingdom=selected_kingdom))  # Передаем выбранное княжество
         app.root.add_widget(game_screen)

@@ -7,7 +7,10 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.uix.slider import Slider
 from kivy.graphics import Color, Line
+
+import resources
 from resources import ResourceManager
+
 # Список доступных зданий с иконками
 BUILDINGS = {
     'Больница': 'files/buildings/medic.jpg',
@@ -15,19 +18,19 @@ BUILDINGS = {
 }
 
 class Faction:
-    def __init__(self, name):
+    def __init__(self, name, cities):
         self.name = name  # Название фракции
         self.population = 0  # Начальное население
         self.taxes = 0           # Начальный уровень налогов
         self.hospitals = 0       # Количество больниц
         self.factories = 0       # Количество мануфактур
         self.food_supply = 0     # Запасы еды
+        self.cities = cities     # Города фракции
         # Инициализация ResourceManager с названием фракции
         self.resource_manager = ResourceManager(self.name)
 
         # Получение дохода с одного человека
-        self.income_per_person = self.resource_manager.get_income_per_person()  # Получение дохода с одного человека
-
+        self.income_per_person = self.resource_manager.get_income_per_person()
 
     def calculate_growth(self):
         """Расчет прироста населения на основе налогов и зданий."""
@@ -68,6 +71,23 @@ class Faction:
         self.taxes = new_tax_rate
         self.update_population()
 
+    def build_hospital(self, city):
+        """Построить больницу в выбранном городе."""
+        if city in self.cities:
+            self.hospitals += 1
+            print(f"Построена больница в городе {city}. Теперь больниц: {self.hospitals}")
+        else:
+            print(f"Город {city} не принадлежит фракции {self.name}.")
+
+    def build_factory(self, city):
+        """Построить фабрику в выбранном городе."""
+        if city in self.cities:
+            self.factories += 1
+            print(f"Построена фабрика в городе {city}. Теперь фабрик: {self.factories}")
+        else:
+            print(f"Город {city} не принадлежит фракции {self.name}.")
+
+
 def start_economy_mode(faction, game_area):
     """Инициализация экономического режима для выбранной фракции"""
 
@@ -90,66 +110,6 @@ def start_economy_mode(faction, game_area):
 
     # Привязываем кнопку "Управление налогами"
     tax_btn.bind(on_press=lambda x: open_tax_popup(faction))
-
-def open_tax_popup(faction):
-    """Открытие попапа для управления налогами"""
-    # Расчет ставки дохода с одного человека с учетом уровня налогов
-    new_tax_rate = faction.income_per_person*(faction.taxes/10)
-
-    # Создаем попап для налогов
-    tax_popup = Popup(title="Управление налогами", size_hint=(0.8, 0.8))
-
-    # Основной контейнер
-    main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
-
-    # Метка для отображения текущего уровня налогов
-    tax_label = Label(text=f"Уровень налогов: {faction.taxes}%", size_hint_y=None, height=44)
-    main_layout.add_widget(tax_label)
-
-    # Слайдер для установки уровня налогов
-    tax_slider = Slider(min=0, max=100, value=faction.taxes)
-    main_layout.add_widget(tax_slider)
-
-    # Метка для отображения дохода с одного человека
-    income_label = Label(text=f"Доход с одного человека: {new_tax_rate}", size_hint_y=None, height=44)
-    main_layout.add_widget(income_label)
-
-    # Функция обновления меток при изменении значения слайдера
-    def update_tax_label(instance, value):
-        new_tax_rate = faction.income_per_person*(faction.taxes/10)
-        faction.set_taxes(value)  # Устанавливаем новые налоги
-        tax_label.text = f"Уровень налогов: {int(value)}%"
-        income_label.text = f"Доход с одного человека: {new_tax_rate:.2f}"  # Обновляем доход с одного гражданина
-
-
-    # Привязываем обновление меток к слайдеру
-    tax_slider.bind(value=update_tax_label)
-
-    # Кнопка для закрытия попапа
-    close_button = Button(text="Закрыть", size_hint_y=None, height=50)
-    close_button.bind(on_press=tax_popup.dismiss)
-    main_layout.add_widget(close_button)
-
-    tax_popup.content = main_layout
-    tax_popup.open()
-
-
-def set_taxes(faction, new_tax_rate, popup):
-    """Установка налогов и обновление населения"""
-    faction.set_taxes(new_tax_rate)
-
-    # Передаем обновленную ставку в ResourceManager
-    resource_manager = ResourceManager(faction.name)
-    resource_manager.economic_params[faction.name]["tax_rate"] = new_tax_rate
-
-    # Закрываем попап после установки налогов
-    popup.dismiss()
-
-    # Отображаем текущее население
-    population_popup = Popup(title="Население обновлено",
-                             content=Label(text=f"Текущее население: {faction.population}"),
-                             size_hint=(0.6, 0.6))
-    population_popup.open()
 
 
 def open_build_popup(faction):
@@ -210,8 +170,8 @@ def open_build_popup(faction):
     label_city = Label(text="Выберите город:", size_hint_y=None, height=44)
     city_box.add_widget(label_city)
 
-    # Список городов
-    city_list = ['Город 1', 'Город 2', 'Город 3']  # Здесь будет ваш список городов
+    # Список городов текущей фракции
+    city_list = faction.cities
     city_dropdown = DropDown()
     for city in city_list:
         btn = Button(text=city, size_hint_y=None, height=44)
@@ -226,7 +186,7 @@ def open_build_popup(faction):
 
     # Кнопка для строительства
     build_action_button = Button(text="Построить", size_hint_y=None, height=50)
-    build_action_button.bind(on_press=lambda x: build_structure(selected_building['name'], city_button.text))
+    build_action_button.bind(on_press=lambda x: build_structure(selected_building['name'], city_button.text, faction))
 
     city_box.add_widget(build_action_button)
 
@@ -237,16 +197,49 @@ def open_build_popup(faction):
     build_popup.content = main_layout
     build_popup.open()
 
-def build_structure(building, city):
+
+def build_structure(building, city, faction):
     """Логика для строительства здания"""
     if building and city:
-        print(f"Строим {building} в городе {city}")
+        if building == 'Больница':
+            faction.build_hospital(city)
+        elif building == 'Фабрика':
+            faction.build_factory(city)
 
         # Закрываем попап после постройки
-        popup = Popup(title="Строительство", content=Label(text=f"Строительство {building} в городе {city} завершено."),
-                      size_hint=(0.6, 0.6))
-        popup.open()
+        Popup(title=f"{building} построена!", content=Label(text=f"{building} построена в городе {city}"),
+              size_hint=(0.5, 0.5)).open()
     else:
-        error_popup = Popup(title="Ошибка", content=Label(text="Выберите здание и город перед строительством."),
-                            size_hint=(0.6, 0.6))
-        error_popup.open()
+        Popup(title="Ошибка", content=Label(text="Выберите здание и город!"), size_hint=(0.5, 0.5)).open()
+
+
+
+
+def open_tax_popup(faction):
+    """Попап для настройки налогов"""
+    new_tax_rate = faction.income_per_person*(faction.taxes/10)
+    tax_popup = Popup(title="Управление налогами", size_hint=(0.8, 0.8))
+
+    layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+    label = Label(text="Установите новый уровень налогов:")
+    layout.add_widget(label)
+
+    tax_slider = Slider(min=0, max=100, value=faction.taxes, size_hint_y=None, height=44)
+    layout.add_widget(tax_slider)
+
+    current_taxes_label = Label(text=f"Текущий уровень налогов: {faction.taxes}%")
+    layout.add_widget(current_taxes_label)
+
+    def on_slider_value_change(instance, value):
+        current_taxes_label.text = f"Текущий уровень налогов: {int(value)}%"
+
+    tax_slider.bind(value=on_slider_value_change)
+
+    save_button = Button(text="Сохранить", size_hint_y=None, height=50)
+    save_button.bind(on_press=lambda x: faction.set_taxes(int(tax_slider.value)))
+
+    layout.add_widget(save_button)
+
+    tax_popup.content = layout
+    tax_popup.open()
