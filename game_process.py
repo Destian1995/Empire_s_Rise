@@ -11,14 +11,13 @@ from kivy.graphics import Color, Ellipse, Rectangle
 import economic
 # Файл, который включает режимы игры
 from economic import Faction
-from resources import ResourceManager
 import army
 import politic
 from ii import AIController
 
 # Список всех фракций
 FACTIONS = ["Аркадия", "Селестия", "Хиперион", "Халидон", "Этерия"]
-
+global_resource_manager = {}
 
 class ResourceBox(BoxLayout):
     def __init__(self, resource_manager, **kwargs):
@@ -45,7 +44,6 @@ class ResourceBox(BoxLayout):
 
     def update_resources(self):
         """Обновление отображаемых ресурсов"""
-        self.resource_manager.update_resources()
         resources = self.resource_manager.get_resources()
 
         for resource_name, value in resources.items():
@@ -74,8 +72,9 @@ class GameScreen(Screen):
         super(GameScreen, self).__init__(**kwargs)
         self.selected_faction = selected_faction
         self.faction = Faction(selected_faction, cities)
-        self.resource_manager = ResourceManager(selected_faction)  # Создаем экземпляр ResourceManager
         self.ai_controllers = {}
+
+        # Инициализация UI
         self.init_ui()
 
     def init_ui(self):
@@ -118,36 +117,11 @@ class GameScreen(Screen):
         self.add_widget(end_turn_button)
 
         # Добавление ResourceBox в верхний правый угол, передаем resource_manager
-        self.resource_box = ResourceBox(resource_manager=self.resource_manager)
+        self.resource_box = ResourceBox(resource_manager=self.faction)
         self.add_widget(self.resource_box)
 
         # Инициализация ИИ для остальных фракций
         self.init_ai_controllers()
-
-    def process_turn(self, instance=None):
-        """Обработка хода игрока и ИИ"""
-        # Обновляем ресурсы
-        self.resource_manager.update_resources()
-
-        # Перерисовываем ресурсы
-        self.update_resource_box()
-
-        # Ход игрока (ожидание действий)
-        print(f"Ход {self.selected_faction}")
-
-        # Ходы ИИ для остальных фракций
-        for faction, ai_controller in self.ai_controllers.items():
-            ai_controller.process_turn()
-            print(f"Ход ИИ {faction}")
-
-    def update_resource_box(self):
-        """Обновление ресурсов в интерфейсе после завершения хода"""
-        # Очищаем текущий ResourceBox
-        self.remove_widget(self.resource_box)
-
-        # Пересоздаем ResourceBox с обновленными ресурсами
-        self.resource_box = ResourceBox(resource_manager=self.resource_manager)
-        self.add_widget(self.resource_box)
 
     def switch_to_economy(self, instance):
         """Переключение на экономический режим"""
@@ -176,17 +150,10 @@ class GameScreen(Screen):
 
     def process_turn(self, instance=None):
         """Обработка хода игрока и ИИ"""
-        # Обновляем ресурсы
-        self.resource_manager.update_resources()
+        # Собираем налоги перед обновлением интерфейса
+        self.faction.update_resources()
 
-        # Обновляем отображение ресурсов без пересоздания ResourceBox
+        # Обновляем отображение в ResourceBox
         self.resource_box.update_resources()
 
-        # Ход игрока (ожидание действий)
-        print(f"Ход {self.selected_faction}")
-
-        # Ходы ИИ для остальных фракций
-        for faction, ai_controller in self.ai_controllers.items():
-            ai_controller.process_turn()
-            print(f"Ход ИИ {faction}")
 

@@ -13,7 +13,7 @@ class AIController:
 
     def process_turn(self):
         """Обработка хода ИИ фракции"""
-        print(f"ИИ {self.faction} делает ход...")
+        #print(f"ИИ {self.faction} делает ход...")
 
         # Экономические действия
         self.manage_economy()
@@ -39,27 +39,27 @@ class AIController:
         if self.resources['money'] >= 200:
             self.economy_level += 1
             self.resources['money'] -= 200
-            print(f"{self.faction} построил экономические здания. Уровень экономики: {self.economy_level}")
+            #print(f"{self.faction} построил экономические здания. Уровень экономики: {self.economy_level}")
         else:
-            print(f"{self.faction} не хватает средств для постройки.")
+            pass#print(f"{self.faction} не хватает средств для постройки.")
 
     def trade_resources(self):
         """Торговля ресурсами с другими фракциями"""
         if self.resources['money'] >= 100:
             self.resources['money'] -= 100
             self.resources['people'] += 50
-            print(f"{self.faction} торгует. Деньги: {self.resources['money']}, Люди: {self.resources['people']}")
+            #print(f"{self.faction} торгует. Деньги: {self.resources['money']}, Люди: {self.resources['people']}")
         else:
-            print(f"{self.faction} не хватает денег для торговли.")
+            pass#print(f"{self.faction} не хватает денег для торговли.")
 
     def expand_economy(self):
         """Расширение экономики (например, колонизация или захват территорий)"""
         if self.resources['people'] >= 100:
             self.resources['people'] -= 100
             self.economy_level += 0.5
-            print(f"{self.faction} расширяет экономику. Новый уровень экономики: {self.economy_level}")
+            #print(f"{self.faction} расширяет экономику. Новый уровень экономики: {self.economy_level}")
         else:
-            print(f"{self.faction} не хватает людей для расширения экономики.")
+            pass#print(f"{self.faction} не хватает людей для расширения экономики.")
 
     def manage_army(self):
         """Управление армией ИИ"""
@@ -76,9 +76,9 @@ class AIController:
         if self.resources['money'] >= 150:
             self.army_strength += 1
             self.resources['money'] -= 150
-            print(f"{self.faction} тренирует войска. Сила армии: {self.army_strength}")
+            #print(f"{self.faction} тренирует войска. Сила армии: {self.army_strength}")
         else:
-            print(f"{self.faction} не хватает средств для тренировки армии.")
+            pass#print(f"{self.faction} не хватает средств для тренировки армии.")
 
     def attack_enemy(self):
         """Атака на соседнюю фракцию"""
@@ -88,15 +88,15 @@ class AIController:
             # Логика успеха атаки
             success = random.random() < 0.5
             if success:
-                print(f"Атака {self.faction} на {target} была успешной!")
+                pass#print(f"Атака {self.faction} на {target} была успешной!")
             else:
-                print(f"Атака {self.faction} на {target} провалилась.")
+               pass #print(f"Атака {self.faction} на {target} провалилась.")
         else:
-            print(f"{self.faction} армия слишком слаба для атаки.")
+           pass #print(f"{self.faction} армия слишком слаба для атаки.")
 
     def defend_territory(self):
         """Защита территории"""
-        print(f"{self.faction} готовится к защите.")
+        #print(f"{self.faction} готовится к защите.")
 
     def manage_politics(self):
         """Управление дипломатией ИИ"""
@@ -112,12 +112,12 @@ class AIController:
 
     def form_alliance(self, target):
         """Создание альянса"""
-        print(f"{self.faction} формирует альянс с {target}.")
+        pass
 
     def negotiate_peace(self, target):
         """Переговоры о мире"""
-        print(f"{self.faction} ведет мирные переговоры с {target}.")
+        pass
 
     def betray_ally(self, target):
         """Предательство альянса"""
-        print(f"{self.faction} предает альянс с {target}.")
+        pass
