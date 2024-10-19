@@ -196,7 +196,7 @@ def open_build_popup(faction):
     global food_label, income_label, hospitals_label, factories_label, money_label, taxes_label, food_peoples_label
     stats_box = BoxLayout(orientation='vertical', size_hint=(0.4, 0.5), pos_hint={'x': 0.05, 'y': 0.1})
 
-    food_label = Label(text=f"Приток еды фабриками: {faction.food_info} / Потребление рабочих: {faction.work_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    food_label = Label(text=f"Чистое производство еды фабриками: {faction.food_info} / Потребление рабочих: {faction.work_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
     income_label = Label(text=f"Прирост численности рабочих: {faction.born_peoples} / Потребление денег больницами: {faction.money_info}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
     money_label = Label(text=f"Чистый прирост денег: {faction.money_up}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
     taxes_label = Label(text=f"Доход от налогов: {faction.taxes_info}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
