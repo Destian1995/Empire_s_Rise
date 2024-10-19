@@ -57,6 +57,10 @@ class Faction:
             self.taxes = self.population * tax_rate  # Применяем базовую налоговую ставку
         return self.taxes
 
+    def current_taxes_rate(self, taxes):
+        print(taxes)
+        return taxes
+
     def set_taxes(self, new_tax_rate):
         """Установка нового уровня налогов и обновление ресурсов."""
         self.custom_tax_rate = self.get_base_tax_rate() * new_tax_rate   # Применяем процент к базовой ставке
@@ -218,7 +222,7 @@ def open_tax_popup(faction):
     main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
     # Устанавливаем начальное значение для налоговой ставки
-    current_tax_rate = '0%' if not faction.tax_set else f"{int(faction.custom_tax_rate)}%"  # Значение по умолчанию, если налог не установлен
+    current_tax_rate = '0%' if not faction.tax_set else f"{faction.current_tax_rate}"  # Значение по умолчанию, если налог не установлен
 
     # Создание выпадающего списка для выбора налоговой ставки
     tax_spinner = Spinner(
@@ -227,7 +231,7 @@ def open_tax_popup(faction):
     )
 
     # Метка для текущей ставки налога
-    tax_label = Label(text=f"Текущая ставка налога: {tax_spinner.text}")  # Изначально берём текст спиннера
+    tax_label = Label(text=f"Текущая ставка налога: {tax_spinner.text}")
 
     def update_tax_rate(spinner, text):
         """Функция для обновления ставки налога при выборе из списка"""
@@ -242,6 +246,7 @@ def open_tax_popup(faction):
 
     def set_tax(instance):
         """Установить новый уровень налогов и закрыть попап"""
+        faction.current_tax_rate = tax_spinner.text  # Обновляем текущее значение налога в faction
         tax_popup.dismiss()
 
     set_tax_button.bind(on_press=set_tax)
