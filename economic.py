@@ -168,7 +168,6 @@ class Faction:
 
         print(f"Ресурсы обновлены: {self.resources}, Больницы: {self.hospitals}, Фабрики: {self.factories}")
 
-
     def get_resources(self):
         """Получение текущих ресурсов"""
         return self.resources
