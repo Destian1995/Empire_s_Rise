@@ -57,10 +57,6 @@ class Faction:
             self.taxes = self.population * tax_rate  # Применяем базовую налоговую ставку
         return self.taxes
 
-    def current_taxes_rate(self, taxes):
-        print(taxes)
-        return taxes
-
     def set_taxes(self, new_tax_rate):
         """Установка нового уровня налогов и обновление ресурсов."""
         self.custom_tax_rate = self.get_base_tax_rate() * new_tax_rate   # Применяем процент к базовой ставке
@@ -97,7 +93,8 @@ class Faction:
 
     def collect_people(self):
         people = self.economic_params[self.faction]["hospital"]["gain_people"]
-        self.free_peoples += (self.hospitals * people) - (self.factories * people)
+        people_f = self.economic_params[self.faction]["factory"]["cost_people"]
+        self.free_peoples += (self.hospitals * people) - (self.factories * people_f)
         self.population += self.free_peoples
 
     def collect_food(self):
