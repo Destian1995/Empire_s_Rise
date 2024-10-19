@@ -1,3 +1,4 @@
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -7,6 +8,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, Line
+from kivy.uix.widget import Widget
 
 # Список доступных зданий с иконками
 BUILDINGS = {
@@ -21,22 +23,29 @@ class Faction:
         self.cities = cities
         self.money = 400
         self.free_peoples = 100
-        self.food = 500
+        self.food = 600
         self.population = 100
         self.hospitals = 0
         self.factories = 0
         self.taxes = 0
+        self.food_info = 0
+        self.work_peoples = 0
+        self.money_info = 0
+        self.born_peoples = 0
+        self.money_up = 0
+        self.taxes_info = 0
+        self.food_peoples = 0
         self.tax_set = False  # Флаг, установлен ли налог
         self.custom_tax_rate = None  # Новый атрибут для хранения пользовательской ставки налога
         self.cities_buildings = {city: {'hospitals': 0, 'factories': 0} for city in cities}  # Словарь для хранения зданий в городах
-        self.resources = {'Деньги': self.money, 'Свободные люди': self.free_peoples, 'Еда': self.food, 'Население': self.population}
+        self.resources = {'Деньги': self.money, 'Рабочие': self.free_peoples, 'Еда': self.food, 'Население': self.population}
         self.economic_params = {
             # Упрощение параметров для улучшения читаемости
-            "Аркадия": {"hospital": {"gain_people": 90, "cost_money": 250}, "factory": {"gain_food": 220, "cost_people": 30}, "food_consumption": 1.8, "tax_rate": 0.09},
-            "Селестия": {"hospital": {"gain_people": 70, "cost_money": 220}, "factory": {"gain_food": 240, "cost_people": 35}, "food_consumption": 1.8, "tax_rate": 0.07},
-            "Хиперион": {"hospital": {"gain_people": 110, "cost_money": 220}, "factory": {"gain_food": 230, "cost_people": 40}, "food_consumption": 1.7, "tax_rate": 0.07},
-            "Этерия": {"hospital": {"gain_people": 140, "cost_money": 200}, "factory": {"gain_food": 200, "cost_people": 50}, "food_consumption": 1.5, "tax_rate": 0.05},
-            "Халидон": {"hospital": {"gain_people": 130, "cost_money": 180}, "factory": {"gain_food": 200, "cost_people": 70}, "food_consumption": 1.2, "tax_rate": 0.03},
+            "Аркадия": {"tax_rate": 0.03},
+            "Селестия": {"tax_rate": 0.015},
+            "Хиперион": {"tax_rate": 0.015},
+            "Этерия": {"tax_rate": 0.012},
+            "Халидон": {"tax_rate": 0.01},
         }
 
     def get_income_per_person(self):
@@ -91,35 +100,74 @@ class Faction:
         """Получение информации о зданиях в указанном городе."""
         return self.cities_buildings.get(city, {})
 
-    def collect_people(self):
-        people = self.economic_params[self.faction]["hospital"]["gain_people"]
-        people_f = self.economic_params[self.faction]["factory"]["cost_people"]
-        self.free_peoples += (self.hospitals * people) - (self.factories * people_f)
-        self.population += self.free_peoples
-
-    def collect_food(self):
-        food = self.economic_params[self.faction]["factory"]["gain_food"]
-        koef = self.economic_params[self.faction]["food_consumption"]
-        self.food += (self.factories * food) - (self.population * koef)
-
-    def collect_money(self):
-        income = self.calculate_tax_income()
-        cost_money = self.economic_params[self.faction]["hospital"]["cost_money"]
-        self.money += income - (self.hospitals * cost_money)
+    def cash_resources(self, money, free_peoples):
+        if self.money >= money and self.free_peoples >= free_peoples:
+            self.money -= money
+            self.free_peoples -= free_peoples
+            return True
+        return False
 
     def update_resources(self):
         """Обновление текущих ресурсов, с проверкой на минимальное значение 0."""
-        self.collect_people()
-        self.collect_food()
-        self.collect_money()
+
+        # Коэффициенты для каждой фракции
+        faction_coefficients = {
+            'Аркадия': {'free_peoples_gain': 190, 'free_peoples_loss': 30, 'money_loss': 100, 'food_gain': 600,
+                        'food_loss': 1.2},
+            'Селестия': {'free_peoples_gain': 170, 'free_peoples_loss': 20, 'money_loss': 200, 'food_gain': 540,
+                         'food_loss': 1.1},
+            'Хиперион': {'free_peoples_gain': 210, 'free_peoples_loss': 40, 'money_loss': 200, 'food_gain': 530,
+                         'food_loss': 0.7},
+            'Этерия': {'free_peoples_gain': 240, 'free_peoples_loss': 60, 'money_loss': 200, 'food_gain': 500,
+                       'food_loss': 0.5},
+            'Халидон': {'free_peoples_gain': 230, 'free_peoples_loss': 50, 'money_loss': 300, 'food_gain': 500,
+                        'food_loss': 0.2},
+        }
+
+        # Получение коэффициентов для текущей фракции
+        faction = self.faction
+        if faction not in faction_coefficients:
+            raise ValueError(f"Фракция '{faction}' не найдена.")
+
+        coeffs = faction_coefficients[faction]
+
+        # Обновление ресурсов с учетом коэффициентов
+        self.free_peoples += (self.hospitals * 500) - (self.factories * 200)
+        self.born_peoples = self.hospitals * 500
+        self.work_peoples = self.factories * 200
+        self.money += self.calculate_tax_income() - (self.hospitals * coeffs['money_loss'])
+        self.money_info = self.hospitals * coeffs['money_loss']
+        self.money_up = self.calculate_tax_income() - (self.hospitals * coeffs['money_loss'])
+        self.taxes_info = self.calculate_tax_income()
+
+        # Учитываем, что одна фабрика может прокормить 1000 людей
+        self.food += (self.factories * 1000) - (self.population * coeffs['food_loss'])
+        self.food_info = (self.factories * 1000) - (self.population * coeffs['food_loss'])
+        self.food_peoples = (self.population * coeffs['food_loss'])
+
+        # Проверяем, будет ли население увеличиваться
+        if self.food > 0:
+            self.population += self.free_peoples  # Увеличиваем население только если есть еда
+        else:
+            # Логика убыли населения при недостатке еды
+            if self.population > 50:
+                loss = int(self.population * 0.25)  # 25% от населения
+                self.population -= loss
+            else:
+                loss = min(self.population, 25)  # Обнуление по 25, но не ниже 0
+                self.population -= loss
+            self.free_peoples = 0  # Все рабочие обнуляются, так как еды нет
 
         # Проверка, чтобы ресурсы не опускались ниже 0
-        self.resources["Деньги"] = max(self.money, 0)
-        self.resources["Свободные люди"] = max(self.free_peoples, 0)
-        self.resources["Еда"] = max(self.food, 0)
-        self.resources["Население"] = max(self.population, 0)
+        self.resources.update({
+            "Деньги": max(self.money, 0),
+            "Рабочие": max(self.free_peoples, 0),
+            "Еда": max(self.food, 0),
+            "Население": max(self.population, 0)
+        })
 
         print(f"Ресурсы обновлены: {self.resources}, Больницы: {self.hospitals}, Фабрики: {self.factories}")
+
 
     def get_resources(self):
         """Получение текущих ресурсов"""
@@ -132,82 +180,84 @@ class Faction:
 
 # Логика для открытия попапа и строительства
 def build_structure(building, city, faction):
-    if building != "Здания" and city != "Города":
-        # Проверка выбора здания и города
-        if building and city:
-            if building == 'Больница':
-                faction.build_hospital(city)
-            elif building == 'Фабрика':
-                faction.build_factory(city)
+    if building == "Фабрика":
+        faction.factories += 1
+    elif building == "Больница":
+        faction.hospitals += 1
 
-            # Сообщение об успешном строительстве
-            Popup(title=f"{building} построена!", content=Label(text=f"{building} построена в городе {city}"),
-                  size_hint=(0.5, 0.5)).open()
-        else:
-            Popup(title="Ошибка", content=Label(text="Не выбрано здание или город!"), size_hint=(0.5, 0.5)).open()
-    else:
-        Popup(title="Ошибка", content=Label(text="Выберите здание и город!"), size_hint=(0.5, 0.5)).open()
-
-
-def show_city_statistics(city, faction):
-    """Показать статистику зданий в выбранном городе."""
-    buildings = faction.get_city_buildings(city)
-    content = f"В городе {city}:\nБольницы: {buildings['hospitals']}\nФабрики: {buildings['factories']}"
-    Popup(title=f"Статистика для города {city}", content=Label(text=content), size_hint=(0.5, 0.5)).open()
+    print(f"Здание {building} построено в городе {city}!")
 
 
 def open_build_popup(faction):
     build_popup = Popup(title="Построить здание", size_hint=(0.8, 0.8))
-    main_layout = BoxLayout(orientation='horizontal', padding=10, spacing=10)
-    building_box = BoxLayout(orientation='vertical', size_hint=(0.4, 1))
 
-    building_label = Label(text="Выберите здание:")
-    building_box.add_widget(building_label)
+    main_layout = FloatLayout()
 
+    # Информационный блок с общими показателями ресурсов
+    global food_label, income_label, hospitals_label, factories_label, money_label, taxes_label, food_peoples_label
+    stats_box = BoxLayout(orientation='vertical', size_hint=(0.4, 0.5), pos_hint={'x': 0.05, 'y': 0.1})
+
+    food_label = Label(text=f"Приток еды фабриками: {faction.food_info} / Потребление рабочих: {faction.work_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    income_label = Label(text=f"Прирост численности рабочих: {faction.born_peoples} / Потребление денег больницами: {faction.money_info}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    money_label = Label(text=f"Чистый прирост денег: {faction.money_up}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    taxes_label = Label(text=f"Доход от налогов: {faction.taxes_info}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    food_peoples_label = Label(text=f"Потребление еды: {faction.food_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    hospitals_label = Label(text=f"Количество больниц: {faction.hospitals}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    factories_label = Label(text=f"Количество фабрик: {faction.factories}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+
+    stats_box.add_widget(food_label)
+    stats_box.add_widget(income_label)
+    stats_box.add_widget(hospitals_label)
+    stats_box.add_widget(factories_label)
+    stats_box.add_widget(money_label)
+    stats_box.add_widget(taxes_label)
+    stats_box.add_widget(food_peoples_label)
+
+    main_layout.add_widget(stats_box)
+
+    # Блок выбора зданий
+    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.05, 'y': 0.6})  # Поднято выше
+    building_main_button = Button(text="Здания", size_hint=(1, None), height=44)
     building_dropdown = DropDown()
     for building, icon in BUILDINGS.items():
         btn = Button(text=building, size_hint_y=None, height=44)
         btn.bind(on_release=lambda btn: building_dropdown.select(btn.text))
         building_dropdown.add_widget(btn)
-
-    building_main_button = Button(text="Здания", size_hint=(1, None), height=44)
     building_main_button.bind(on_release=building_dropdown.open)
     building_dropdown.bind(on_select=lambda instance, x: setattr(building_main_button, 'text', x))
 
+    building_box.add_widget(Label(text="Выберите здание:", size_hint=(1, None), height=30))
     building_box.add_widget(building_main_button)
+
     main_layout.add_widget(building_box)
 
-    city_box = BoxLayout(orientation='vertical', size_hint=(0.4, 1))
-    city_label = Label(text="Выберите город:")
-    city_box.add_widget(city_label)
-
+    # Блок выбора города
+    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.35, 'y': 0.6})  # Поднято выше
+    city_main_button = Button(text="Города", size_hint=(1, None), height=44)
     city_dropdown = DropDown()
     for city in faction.cities:
         btn = Button(text=city, size_hint_y=None, height=44)
         btn.bind(on_release=lambda btn: city_dropdown.select(btn.text))
         city_dropdown.add_widget(btn)
-
-    city_main_button = Button(text="Города", size_hint=(1, None), height=44)
     city_main_button.bind(on_release=city_dropdown.open)
     city_dropdown.bind(on_select=lambda instance, x: setattr(city_main_button, 'text', x))
 
+    city_box.add_widget(Label(text="Выберите город:", size_hint=(1, None), height=30))
     city_box.add_widget(city_main_button)
+
     main_layout.add_widget(city_box)
 
-    button_box = BoxLayout(orientation='vertical', size_hint=(0.2, 1))
+    # Блок кнопки для постройки зданий
+    button_box = BoxLayout(orientation='vertical', size_hint=(0.2, 0.5), pos_hint={'x': 0.7, 'y': 0.6})  # Поднято выше
     build_button = Button(text="Построить", size_hint=(1, None), height=44)
     build_button.bind(on_release=lambda x: build_structure(building_main_button.text, city_main_button.text, faction))
 
-    # Кнопка для показа статистики
-    stats_button = Button(text="Статистика", size_hint=(1, None), height=44)
-    stats_button.bind(on_release=lambda x: show_city_statistics(city_main_button.text, faction))
-
     button_box.add_widget(build_button)
-    button_box.add_widget(stats_button)
     main_layout.add_widget(button_box)
 
     build_popup.content = main_layout
     build_popup.open()
+
 
 #---------------------------------------------------------------
 
@@ -263,7 +313,7 @@ def start_economy_mode(faction, game_area):
     # Кнопки для управления экономикой
     economy_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), pos_hint={'x': 0, 'y': 0})
 
-    build_btn = Button(text="Строительство", size_hint_x=0.33, size_hint_y=None, height=50)
+    build_btn = Button(text="Состояние государства", size_hint_x=0.33, size_hint_y=None, height=50)
     trade_btn = Button(text="Торговля", size_hint_x=0.33, size_hint_y=None, height=50)
     tax_btn = Button(text="Управление налогами", size_hint_x=0.33, size_hint_y=None, height=50)
 
