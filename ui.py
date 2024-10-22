@@ -4,12 +4,15 @@ from kivy.uix.image import Image
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
+from collections import defaultdict
+import os
+import re
 
 class FortressInfoPopup(Popup):
     def __init__(self, kingdom, fortress_coords, **kwargs):
         super(FortressInfoPopup, self).__init__(**kwargs)
         self.fraction = kingdom
-        self.city = fortress_coords
+        self.city = fortress_coords  # Запоминаем координаты города в self.city
 
         self.size_hint = (0.8, 0.8)
 
@@ -37,7 +40,6 @@ class FortressInfoPopup(Popup):
         self.attacking_units_list.add_widget(self.attacking_units_box)
         troops_layout.add_widget(attacking_box)
 
-
         # Добавляем верхний контейнер в основной макет
         main_layout.add_widget(troops_layout)
 
@@ -63,8 +65,7 @@ class FortressInfoPopup(Popup):
 
         # Загружаем данные о войсках и зданиях
         self.load_troops(kingdom, fortress_coords)
-        self.load_buildings(kingdom, fortress_coords)
-
+        self.load_buildings()
 
 
     def load_troops(self, kingdom, fortress_coords):
@@ -76,20 +77,50 @@ class FortressInfoPopup(Popup):
             self.attacking_units_box.add_widget(Label(text=unit))
 
 
-    def load_buildings(self, kingdom, fortress_coords):
-        # Здесь вы загружаете данные о зданиях, например:
-        buildings = self.get_buildings(kingdom, fortress_coords)
+    def load_buildings(self):
+        """Загружаем данные о построенных зданиях из файла для выбранного города"""
+        buildings = self.get_buildings()
 
         # Заполняем бокс зданий
         for building in buildings:
             self.buildings_box.add_widget(Label(text=building))
 
+
     def get_units(self, kingdom, fortress_coords):
         # Вернуть список атакующих войск (пример данных)
-        return [" юнит 1", "юнит 2"]
+        return ["Юнит 1", "Юнит 2"]
 
 
+    def get_buildings(self):
+        """Загружает здания, построенные в указанном городе из файла building_changes.log"""
+        log_file = 'files/config/buildings_city.log'
+        buildings_count = defaultdict(int)  # Используем для подсчета зданий одного типа
+        coords_pattern = re.escape(f"City: ({self.city[0]}, {self.city[1]})")  # Преобразуем координаты в строку
+        print(coords_pattern)  # Используем для отладки
+        buildings = []
 
-    def get_buildings(self, kingdom, fortress_coords):
-        # Вернуть список построенных зданий (пример данных)
-        return ["Здание 1", "Здание 2"]
+        # Проверяем, существует ли файл
+        if os.path.exists(log_file):
+            with open(log_file, 'r') as file:
+                for line in file:
+                    # Проверяем, содержатся ли координаты города в строке
+                    if re.search(coords_pattern, line):
+                        # Извлекаем тип здания из строки
+                        if "factory" in line:
+                            buildings_count["Фабрика"] += 1
+                        elif "hospital" in line:
+                            buildings_count["Больница"] += 1
+        if not os.path.exists(log_file):
+              print(f"Log file {log_file} not found!")
+
+
+        # Преобразуем результат в список зданий и их количества
+        for building, count in buildings_count.items():
+            buildings.append(f"{building}: {count}")
+        print(buildings)
+
+        # Если зданий не было найдено, возвращаем сообщение
+        if not buildings:
+            buildings.append("Нет построенных зданий.")
+
+        return buildings

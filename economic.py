@@ -9,6 +9,26 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, Line
 from kivy.uix.widget import Widget
+import datetime
+
+
+def clear_building_log():
+    """Очищает данные в файле building_changes.log."""
+    with open('files/config/buildings_city.log', 'w') as file:
+        file.write('')  # Просто открываем файл в режиме записи, что удаляет все его содержимое
+
+
+# Очищаем файл перед началом программы
+clear_building_log()
+
+# Функция для записи изменений в файл
+def log_building_change(faction_name, city, building_type, action, amount):
+    """Логирует изменения в количестве зданий."""
+    with open('files/config/buildings_city.log', 'a') as file:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"[{timestamp}] Faction: {faction_name}, City: {city}, Action: {action} {amount} {building_type}(s)\n"
+        file.write(log_entry)
+
 
 # Список доступных зданий с иконками
 BUILDINGS = {
@@ -89,12 +109,14 @@ class Faction:
     def build_factory(self, city):
         """Увеличить количество фабрик в определенном городе и обновить ресурсы."""
         self.factories += 1
-        self.cities_buildings[city]['factories'] += 1  # Увеличиваем счетчик фабрик в выбранном городе
+        self.cities_buildings[city]['factories'] += 1
+        log_building_change(self.faction, city, "factory", "Built", 1)  # Логируем постройку фабрики
 
     def build_hospital(self, city):
         """Увеличить количество больниц в определенном городе и обновить ресурсы."""
         self.hospitals += 1
-        self.cities_buildings[city]['hospitals'] += 1  # Увеличиваем счетчик больниц в выбранном городе
+        self.cities_buildings[city]['hospitals'] += 1
+        log_building_change(self.faction, city, "hospital", "Built", 1)  # Логируем постройку больницы
 
     def get_city_buildings(self, city):
         """Получение информации о зданиях в указанном городе."""
@@ -195,9 +217,9 @@ def build_structure(building, city, faction):
         return
 
     if building == "Фабрика":
-        faction.factories += 1
+        faction.build_factory(city)
     elif building == "Больница":
-        faction.hospitals += 1
+        faction.build_hospital(city)
 
     show_success_message(building, city)
 
@@ -341,4 +363,3 @@ def start_economy_mode(faction, game_area):
 
     # Привязываем кнопку "Управление налогами"
     tax_btn.bind(on_press=lambda x: open_tax_popup(faction))
-

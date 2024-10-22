@@ -9,6 +9,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from game_process import GameScreen
 from ui import *
+import os
+import json
 
 # Размеры окна
 screen_width, screen_height = 1200, 800
@@ -83,6 +85,38 @@ territory_owners = {
         "towns": ["Этерия"] * len(kingdom_points["Этерия"]["towns"])
     }
 }
+
+
+def check_and_create_file():
+    file_path = os.path.join('files', 'config', 'city.md')
+
+    # Проверяем, существует ли файл
+    if not os.path.exists(file_path):
+        print("Файл не найден, создаём файл и записываем данные...")
+
+        # Создаём папку, если её нет
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        # Данные для записи
+        data = {
+            "kingdom_points": kingdom_points,
+            "fortress_names": fortress_names,
+            "territory_owners": territory_owners
+        }
+
+        # Записываем данные в файл
+        with open(file_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+
+        print("Данные успешно записаны в файл.")
+    else:
+        print("Файл уже существует.")
+
+
+def load_kingdom_data(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return data
 
 
 class HallOfFameWidget(FloatLayout):
@@ -395,19 +429,30 @@ class KingdomSelectionWidget(FloatLayout):
         if selected_kingdom is None:
             print("Фракция не выбрана. Пожалуйста, выберите фракцию перед началом игры.")
             return
-        cities = territory_owners[selected_kingdom]["fortresses"]
+
+        # Проверяем и создаём файл, если его нет
+        check_and_create_file()
+
+        # Загружаем данные из файла
+        file_path = os.path.join('files', 'config', 'city.md')
+        data = load_kingdom_data(file_path)
+
+        # Получаем города и крепости для выбранного княжества
+        cities = data['territory_owners'][selected_kingdom]['fortresses']
+
         # Передаем выбранное княжество на новый экран игры
         game_screen = GameScreen(selected_kingdom, cities)
         app.root.clear_widgets()
-        app.root.add_widget(MapWidget(selected_kingdom=selected_kingdom, player_kingdom=selected_kingdom))  # Передаем выбранное княжество
+        app.root.add_widget(MapWidget(selected_kingdom=selected_kingdom,
+                                      player_kingdom=selected_kingdom))  # Передаем выбранное княжество
         app.root.add_widget(game_screen)
-
 
 
 # Основное приложение
 class EmpireApp(App):
     def build(self):
         return MenuWidget()
+
 
 class Main(App):
     def __init__(self, **kwargs):
