@@ -38,7 +38,7 @@ class Faction:
         self.tax_set = False  # Флаг, установлен ли налог
         self.custom_tax_rate = None  # Новый атрибут для хранения пользовательской ставки налога
         self.cities_buildings = {city: {'hospitals': 0, 'factories': 0} for city in cities}  # Словарь для хранения зданий в городах
-        self.resources = {'Деньги': self.money, 'Рабочие': self.free_peoples, 'Еда': self.food, 'Население': self.population}
+        self.resources = {'Кроны': self.money, 'Рабочие': self.free_peoples, 'Еда': self.food, 'Население': self.population}
         self.economic_params = {
             # Упрощение параметров для улучшения читаемости
             "Аркадия": {"tax_rate": 0.03},
@@ -150,17 +150,17 @@ class Faction:
             self.population += self.free_peoples  # Увеличиваем население только если есть еда
         else:
             # Логика убыли населения при недостатке еды
-            if self.population > 50:
-                loss = int(self.population * 0.25)  # 25% от населения
+            if self.population > 100:
+                loss = int(self.population * 0.45)  # 45% от населения
                 self.population -= loss
             else:
-                loss = min(self.population, 25)  # Обнуление по 25, но не ниже 0
+                loss = min(self.population, 50)  # Обнуление по 25, но не ниже 0
                 self.population -= loss
             self.free_peoples = 0  # Все рабочие обнуляются, так как еды нет
 
         # Проверка, чтобы ресурсы не опускались ниже 0
         self.resources.update({
-            "Деньги": max(self.money, 0),
+            "Кроны": max(self.money, 0),
             "Рабочие": max(self.free_peoples, 0),
             "Еда": max(self.food, 0),
             "Население": max(self.population, 0)
@@ -178,22 +178,36 @@ class Faction:
 
 
 # Логика для открытия попапа и строительства
+# Функция для отображения ошибки
+def show_error_message(message):
+    error_popup = Popup(title="Ошибка", content=Label(text=message), size_hint=(0.5, 0.5))
+    error_popup.open()
+
+# Функция для отображения уведомления об успешной постройке
+def show_success_message(building, city):
+    success_popup = Popup(title="Успешно", content=Label(text=f"Здание '{building}' построено в городе '{city}'!"), size_hint=(0.5, 0.5))
+    success_popup.open()
+
+# Функция для постройки здания
 def build_structure(building, city, faction):
+    if building == "Здания" or city == "Города":
+        show_error_message("Выберите здание для постройки и город!")
+        return
+
     if building == "Фабрика":
         faction.factories += 1
     elif building == "Больница":
         faction.hospitals += 1
 
-    print(f"Здание {building} построено в городе {city}!")
+    show_success_message(building, city)
 
-
+# Функция открытия окна постройки зданий
 def open_build_popup(faction):
     build_popup = Popup(title="Построить здание", size_hint=(0.8, 0.8))
 
     main_layout = FloatLayout()
 
     # Информационный блок с общими показателями ресурсов
-    global food_label, income_label, hospitals_label, factories_label, money_label, taxes_label, food_peoples_label
     stats_box = BoxLayout(orientation='vertical', size_hint=(0.4, 0.5), pos_hint={'x': 0.05, 'y': 0.1})
 
     food_label = Label(text=f"Чистое производство еды фабриками: {faction.food_info} / Потребление рабочих: {faction.work_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
@@ -215,7 +229,7 @@ def open_build_popup(faction):
     main_layout.add_widget(stats_box)
 
     # Блок выбора зданий
-    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.05, 'y': 0.6})  # Поднято выше
+    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.05, 'y': 0.6})
     building_main_button = Button(text="Здания", size_hint=(1, None), height=44)
     building_dropdown = DropDown()
     for building, icon in BUILDINGS.items():
@@ -231,7 +245,7 @@ def open_build_popup(faction):
     main_layout.add_widget(building_box)
 
     # Блок выбора города
-    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.35, 'y': 0.6})  # Поднято выше
+    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.35, 'y': 0.6})
     city_main_button = Button(text="Города", size_hint=(1, None), height=44)
     city_dropdown = DropDown()
     for city in faction.cities:
@@ -247,7 +261,7 @@ def open_build_popup(faction):
     main_layout.add_widget(city_box)
 
     # Блок кнопки для постройки зданий
-    button_box = BoxLayout(orientation='vertical', size_hint=(0.2, 0.5), pos_hint={'x': 0.7, 'y': 0.6})  # Поднято выше
+    button_box = BoxLayout(orientation='vertical', size_hint=(0.2, 0.5), pos_hint={'x': 0.7, 'y': 0.6})
     build_button = Button(text="Построить", size_hint=(1, None), height=44)
     build_button.bind(on_release=lambda x: build_structure(building_main_button.text, city_main_button.text, faction))
 
@@ -256,7 +270,6 @@ def open_build_popup(faction):
 
     build_popup.content = main_layout
     build_popup.open()
-
 
 #---------------------------------------------------------------
 

@@ -24,7 +24,7 @@ def start_army_mode(faction, game_area):
 
     train_btn = Button(text="Тренировка войск", size_hint_x=0.33, size_hint_y=None, height=50)
     attack_btn = Button(text="Расквартировка", size_hint_x=0.33, size_hint_y=None, height=50)
-    defend_btn = Button(text="Выдвижение войск", size_hint_x=0.33, size_hint_y=None, height=50)
+    defend_btn = Button(text="Управление дб. оружием", size_hint_x=0.33, size_hint_y=None, height=50)
 
     army_layout.add_widget(train_btn)
     army_layout.add_widget(attack_btn)
@@ -61,6 +61,7 @@ def show_unit_selection(faction):
                 "Защита против наземных юнитов": 30,
                 "Защита против воздушных юнитов": 30,
                 "Живучесть": 100,
+                "----------------------------": '',
                 "Индекс эффективности": "10 из 50"
             }
         },
@@ -69,10 +70,11 @@ def show_unit_selection(faction):
             "image": f"files/army/{english_faction}/track.jpg",
             "stats": {
                 "Урон против наземных юнитов": 250,
-                "Урон против воздушных юнитов": 70,
-                "Защита против наземных юнитов": 210,
-                "Защита против воздушных юнитов": 60,
+                "Урон против воздушных юнитов": 100,
+                "Защита против наземных юнитов": 270,
+                "Защита против воздушных юнитов": 90,
                 "Живучесть": 250,
+                "----------------------------": '',
                 "Индекс эффективности": "27 из 50"
             }
         },
@@ -80,12 +82,13 @@ def show_unit_selection(faction):
             "cost": (800, 10),
             "image": f"files/army/{english_faction}/push.jpg",
             "stats": {
-                "Урон против наземных юнитов": 600,
+                "Урон против наземных юнитов": 700,
                 "Урон против воздушных юнитов": 20,
-                "Защита против наземных юнитов": 100,
+                "Защита против наземных юнитов": 90,
                 "Защита против воздушных юнитов": 10,
                 "Живучесть": 200,
-                "Индекс эффективности": "29 из 50"
+                "----------------------------": '',
+                "Индекс эффективности": "26 из 50"
             }
         },
         "Истребитель": {
@@ -97,6 +100,7 @@ def show_unit_selection(faction):
                 "Защита против наземных юнитов": 40,
                 "Защита против воздушных юнитов": 250,
                 "Живучесть": 450,
+                "----------------------------": '',
                 "Индекс эффективности": "40 из 50"
             }
         },
@@ -113,7 +117,7 @@ def show_unit_selection(faction):
             unit_box.add_widget(unit_image)
 
             # Добавляем информацию о стоимости
-            cost_label = Label(text=f"Цена: {unit_info['cost'][0]} денег\nРабочие: {unit_info['cost'][1]}",
+            cost_label = Label(text=f"Кроны: {unit_info['cost'][0]} \nРабочие: {unit_info['cost'][1]}",
                                size_hint=(1, 0.2))
             unit_box.add_widget(cost_label)
 

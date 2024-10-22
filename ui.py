@@ -8,6 +8,9 @@ from kivy.uix.scrollview import ScrollView
 class FortressInfoPopup(Popup):
     def __init__(self, kingdom, fortress_coords, **kwargs):
         super(FortressInfoPopup, self).__init__(**kwargs)
+        self.fraction = kingdom
+        self.city = fortress_coords
+
         self.size_hint = (0.8, 0.8)
 
         # Убираем заголовок окна
