@@ -260,7 +260,7 @@ class Faction:
 
     def generate_food_price(self):
         """Генерация случайной цены на еду"""
-        self.current_food_price = random.randint(5000, 35000)
+        self.current_food_price = random.randint(3000, 47000)
         self.food_price_history.append(self.current_food_price)
 
         # Ограничение длины истории цен до 15 элементов
@@ -271,7 +271,7 @@ class Faction:
 
     def trade_food(self, action):
         """Торговля едой"""
-        if action == 'buy': # Преобразование бушелей в еду
+        if action == 'buy':  # Преобразование бушелей в еду
             self.money -= self.current_food_price
             self.food += 10000  # Прямое добавление еды
         elif action == 'sell':  # Преобразование бушелей в еду
@@ -282,7 +282,7 @@ class Faction:
         """Генерация графика цен на еду"""
         plt.figure(figsize=(10, 5))
         plt.plot(self.food_price_history, marker='o')
-        plt.title('История цен на еду за бушель(10000)')
+        plt.title('История цен на еду за 10000 единиц(бушель)')
         plt.xlabel('Ходы')
         plt.ylabel('Цена за бушель (кроны)')
         plt.grid()
@@ -339,7 +339,9 @@ def open_build_popup(faction):
         f"Доход от налогов: {faction.taxes_info}\n"
         f"Потребление еды: {faction.food_peoples}\n"
         f"Количество больниц: {faction.hospitals}\n"
-        f"Количество фабрик: {faction.factories}"
+        f"Количество фабрик: {faction.factories}\n"
+        f"1 больница дает(за ход): 500 рабочих и требует 100 крон\n"
+        f"1 фабрика дает(за ход): может прокормить 1000 населения, но требует 200 рабочих"
     )
 
     stats_text_box = TextInput(text=stats_info, readonly=True, size_hint=(1, None), height=200)
