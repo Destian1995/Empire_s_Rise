@@ -114,7 +114,7 @@ class Faction:
         self.calculate_tax_income()
 
     def tax_effect(self, tax_rate):
-        if 50 > tax_rate >= 35:
+        if 50 > tax_rate > 35:
             return -250
         elif 75 > tax_rate >= 50:
             return -8000
@@ -124,8 +124,10 @@ class Faction:
             return -70000
         elif 15 > tax_rate:
             return 450
-        else:
+        elif 20 > tax_rate:
             return 90
+        else:
+            return 0
 
     def apply_tax_effect(self, tax_rate):
         # Рассчитать и применить эффект налогов на население
@@ -295,12 +297,18 @@ class Faction:
 
     def trade_food(self, action):
         """Торговля едой"""
-        if action == 'buy':  # Преобразование бушелей в еду
-            self.money -= self.current_food_price
-            self.food += 10000  # Прямое добавление еды
-        elif action == 'sell':  # Преобразование бушелей в еду
-            self.money += self.current_food_price
-            self.food -= 10000  # Прямое уменьшение еды
+        if action == 'buy':  # Покупка еды
+            if self.money >= self.current_food_price:
+                self.money -= self.current_food_price
+                self.food += 10000
+            else:
+                show_message("Недостаточно денег", "У вас недостаточно денег для покупки 10000 единиц еды.")
+        elif action == 'sell':  # Продажа еды
+            if self.food >= 10000:
+                self.money += self.current_food_price
+                self.food -= 10000
+            else:
+                show_message("Недостаточно еды", "У вас недостаточно еды для продажи 10000 единиц.")
 
     def plot_food_price(self):
         """Генерация графика цен на еду"""
@@ -315,6 +323,18 @@ class Faction:
         plt.close()
         buf.seek(0)
         return buf.getvalue()
+
+def show_message(title, message):
+    layout = BoxLayout(orientation='vertical', padding=10)
+    label = Label(text=message, size_hint=(1, 0.8))
+    close_btn = Button(text="Закрыть", size_hint=(1, 0.2))
+
+    layout.add_widget(label)
+    layout.add_widget(close_btn)
+
+    popup = Popup(title=title, content=layout, size_hint=(0.6, 0.4))
+    close_btn.bind(on_press=popup.dismiss)
+    popup.open()
 
 # Логика для отображения сообщения об ошибке средств
 def show_error_message(message):
