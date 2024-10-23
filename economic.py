@@ -151,12 +151,14 @@ class Faction:
         print(
             f"Обновлено количество зданий для {self.faction}: Госпиталей = {self.hospitals}, Фабрик = {self.factories}")
 
-    def cash_resources(self, money, free_peoples):
-        if self.money >= money and self.free_peoples >= free_peoples:
+    def cash_build(self, money):
+        """Списывает деньги, если их хватает, и возвращает True, иначе False."""
+        if self.money >= money:
             self.money -= money
-            self.free_peoples -= free_peoples
+            self.resources['Кроны'] = self.money
             return True
-        return False
+        else:
+            return False
 
     def update_resources(self):
         """Обновление текущих ресурсов, с проверкой на минимальное значение 0."""
@@ -228,13 +230,12 @@ class Faction:
             return False
 
 
-# Логика для открытия попапа и строительства
-# Функция для отображения ошибки
+# Логика для отображения сообщения об ошибке средств
 def show_error_message(message):
     error_popup = Popup(title="Ошибка", content=Label(text=message), size_hint=(0.5, 0.5))
     error_popup.open()
 
-# Функция для отображения уведомления об успешной постройке
+# Логика для успешного строительства
 def show_success_message(building, city):
     success_popup = Popup(title="Успешно", content=Label(text=f"Здание '{building}' построено в городе '{city}'!"), size_hint=(0.5, 0.5))
     success_popup.open()
@@ -246,11 +247,18 @@ def build_structure(building, city, faction):
         return
 
     if building == "Фабрика":
-        faction.build_factory(city)
+        if faction.cash_build(200):
+            faction.build_factory(city)
+            show_success_message(building, city)
+        else:
+            show_error_message("Недостаточно денег для постройки фабрики! \n Стоимость фабрики 200 крон")
     elif building == "Больница":
-        faction.build_hospital(city)
+        if faction.cash_build(100):
+            faction.build_hospital(city)
+            show_success_message(building, city)
+        else:
+            show_error_message("Недостаточно денег для постройки больницы! \n Стоимость больницы 100 крон")
 
-    show_success_message(building, city)
 
 # Функция открытия окна постройки зданий
 def open_build_popup(faction):
