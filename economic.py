@@ -10,7 +10,9 @@ from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, Line
 from kivy.uix.widget import Widget
 import datetime
-
+import os
+import re
+from collections import defaultdict
 
 def clear_building_log():
     """Очищает данные в файле building_changes.log."""
@@ -122,6 +124,33 @@ class Faction:
         """Получение информации о зданиях в указанном городе."""
         return self.cities_buildings.get(city, {})
 
+    def update_buildings(self):
+        """Обновляет количество госпиталей и фабрик для текущей фракции по данным из лог-файла."""
+        log_file = 'files/config/buildings_city.log'
+
+        # Сброс значений перед обновлением
+        self.hospitals = 0
+        self.factories = 0
+
+        if os.path.exists(log_file):
+            with open(log_file, 'r') as file:
+                for line in file:
+                    # Проверяем, что строка относится к текущей фракции
+                    if f"Faction: {self.faction}" in line:
+                        # Извлекаем координаты города
+                        match = re.search(r'City: \((\d+), (\d+)\)', line)
+                        if match:
+                            # Проверяем тип здания
+                            if "hospital" in line:
+                                self.hospitals += 1
+                            elif "factory" in line:
+                                self.factories += 1
+        else:
+            print(f"Log file {log_file} not found!")
+
+        print(
+            f"Обновлено количество зданий для {self.faction}: Госпиталей = {self.hospitals}, Фабрик = {self.factories}")
+
     def cash_resources(self, money, free_peoples):
         if self.money >= money and self.free_peoples >= free_peoples:
             self.money -= money
@@ -131,7 +160,7 @@ class Faction:
 
     def update_resources(self):
         """Обновление текущих ресурсов, с проверкой на минимальное значение 0."""
-
+        self.update_buildings()
         # Коэффициенты для каждой фракции
         faction_coefficients = {
             'Аркадия': {'free_peoples_gain': 190, 'free_peoples_loss': 30, 'money_loss': 100, 'food_gain': 600,

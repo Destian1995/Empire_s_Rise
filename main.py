@@ -322,7 +322,7 @@ class KingdomSelectionWidget(FloatLayout):
 
         # Заголовок с черным цветом текста
         self.kingdom_label = Label(
-            text="Выберите княжество",
+            text="Выберите сторону",
             font_size='30sp',
             size_hint=(1, 0.2),
             pos_hint={'center_x': 0.5, 'center_y': 0.85},
