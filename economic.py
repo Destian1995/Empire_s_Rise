@@ -8,11 +8,24 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, Line
+from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
+from kivy.uix.image import Image
+from kivy.graphics.texture import Texture
 import datetime
 import os
 import re
+import random
+from kivymd.app import MDApp
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
 from collections import defaultdict
+import matplotlib.pyplot as plt
+import io
+
 
 def clear_building_log():
     """Очищает данные в файле building_changes.log."""
@@ -57,6 +70,9 @@ class Faction:
         self.money_up = 0
         self.taxes_info = 0
         self.food_peoples = 0
+        self.food_price_history = []  # История цен на еду
+        self.current_food_price = 0  # Текущая цена на еду
+        self.turns = 0  # Счетчик ходов
         self.tax_set = False  # Флаг, установлен ли налог
         self.custom_tax_rate = None  # Новый атрибут для хранения пользовательской ставки налога
         self.cities_buildings = {city: {'hospitals': 0, 'factories': 0} for city in cities}  # Словарь для хранения зданий в городах
@@ -69,6 +85,8 @@ class Faction:
             "Этерия": {"tax_rate": 0.012},
             "Халидон": {"tax_rate": 0.01},
         }
+
+        self.generate_food_price()  # Генерация начальной цены на еду
 
     def get_income_per_person(self):
         """Получение дохода с одного человека для данной фракции."""
@@ -161,11 +179,16 @@ class Faction:
 
     def update_cash(self):
         self.resources['Кроны'] = self.money
+        self.resources['Рабочие'] = self.free_peoples
+        self.resources['Еда'] = self.food
         return self.resources
 
     def update_resources(self):
         """Обновление текущих ресурсов, с проверкой на минимальное значение 0 и округлением до целых чисел."""
         self.update_buildings()
+
+        # Генерация новой цены на еду
+        self.generate_food_price()
 
         # Коэффициенты для каждой фракции
         faction_coefficients = {
@@ -225,6 +248,7 @@ class Faction:
 
         print(f"Ресурсы обновлены: {self.resources}, Больницы: {self.hospitals}, Фабрики: {self.factories}")
 
+
     def get_resources(self):
         """Получение текущих ресурсов"""
         return self.resources
@@ -233,6 +257,40 @@ class Faction:
         if self.population == 0:
             return False
 
+
+    def generate_food_price(self):
+        """Генерация случайной цены на еду"""
+        self.current_food_price = random.randint(5000, 35000)
+        self.food_price_history.append(self.current_food_price)
+
+        # Ограничение длины истории цен до 15 элементов
+        if len(self.food_price_history) > 15:
+            self.food_price_history.pop(0)
+
+        self.turns += 1
+
+    def trade_food(self, action):
+        """Торговля едой"""
+        if action == 'buy': # Преобразование бушелей в еду
+            self.money -= self.current_food_price
+            self.food += 10000  # Прямое добавление еды
+        elif action == 'sell':  # Преобразование бушелей в еду
+            self.money += self.current_food_price
+            self.food -= 10000  # Прямое уменьшение еды
+
+    def plot_food_price(self):
+        """Генерация графика цен на еду"""
+        plt.figure(figsize=(10, 5))
+        plt.plot(self.food_price_history, marker='o')
+        plt.title('История цен на еду за бушель(10000)')
+        plt.xlabel('Ходы')
+        plt.ylabel('Цена за бушель (кроны)')
+        plt.grid()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        plt.close()
+        buf.seek(0)
+        return buf.getvalue()
 
 # Логика для отображения сообщения об ошибке средств
 def show_error_message(message):
@@ -271,23 +329,22 @@ def open_build_popup(faction):
     main_layout = FloatLayout()
 
     # Информационный блок с общими показателями ресурсов
-    stats_box = BoxLayout(orientation='vertical', size_hint=(0.4, 0.5), pos_hint={'x': 0.05, 'y': 0.1})
+    stats_box = BoxLayout(orientation='vertical', size_hint=(1, 0.5), pos_hint={'x': 0, 'y': 0.1}, padding=[10, 10, 10, 10])
 
-    food_label = Label(text=f"Чистое производство еды фабриками: {faction.food_info} / Потребление рабочих: {faction.work_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
-    income_label = Label(text=f"Прирост численности рабочих: {faction.born_peoples} / Потребление денег больницами: {faction.money_info}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
-    money_label = Label(text=f"Чистый прирост денег: {faction.money_up}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
-    taxes_label = Label(text=f"Доход от налогов: {faction.taxes_info}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
-    food_peoples_label = Label(text=f"Потребление еды: {faction.food_peoples}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
-    hospitals_label = Label(text=f"Количество больниц: {faction.hospitals}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
-    factories_label = Label(text=f"Количество фабрик: {faction.factories}", size_hint=(1, None), height=30, pos_hint={'x': 0.45})
+    # Используем TextInput для отображения информации о ресурсах
+    stats_info = (
+        f"Чистое производство еды фабриками: {faction.food_info} / Потребление рабочих: {faction.work_peoples}\n"
+        f"Прирост численности рабочих: {faction.born_peoples} / Потребление денег больницами: {faction.money_info}\n"
+        f"Чистый прирост денег: {faction.money_up}\n"
+        f"Доход от налогов: {faction.taxes_info}\n"
+        f"Потребление еды: {faction.food_peoples}\n"
+        f"Количество больниц: {faction.hospitals}\n"
+        f"Количество фабрик: {faction.factories}"
+    )
 
-    stats_box.add_widget(food_label)
-    stats_box.add_widget(income_label)
-    stats_box.add_widget(hospitals_label)
-    stats_box.add_widget(factories_label)
-    stats_box.add_widget(money_label)
-    stats_box.add_widget(taxes_label)
-    stats_box.add_widget(food_peoples_label)
+    stats_text_box = TextInput(text=stats_info, readonly=True, size_hint=(1, None), height=200)
+    stats_text_box.background_color = (0.9, 0.9, 0.9, 1)  # Светлый цвет фона
+    stats_box.add_widget(stats_text_box)
 
     main_layout.add_widget(stats_box)
 
@@ -334,7 +391,54 @@ def open_build_popup(faction):
     build_popup.content = main_layout
     build_popup.open()
 
+
+
 #---------------------------------------------------------------
+
+# Функция для открытия окна торговли
+def open_trade_popup(game_instance):
+    """Открытие окна торговли с графиком цен"""
+    game_instance.generate_food_price()  # Генерация новой цены на еду при открытии окна
+
+    trade_layout = BoxLayout(orientation='vertical', padding=10)
+
+    # Генерация и сохранение графика как изображения
+    plot_data = game_instance.plot_food_price()
+    with open('food_price.png', 'wb') as f:
+        f.write(plot_data)  # Сохранение изображения
+
+    img = Image(source='food_price.png', size_hint_y=None, height=400)
+
+    # Кнопки для покупки и продажи
+    button_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=50)
+    buy_btn = Button(text="Купить 10000 еды", size_hint_x=0.5)
+    sell_btn = Button(text="Продать 10000 еды", size_hint_x=0.5)
+    button_layout.add_widget(buy_btn)
+    button_layout.add_widget(sell_btn)
+
+    trade_layout.add_widget(img)  # Добавляем изображение графика в основной контейнер
+    trade_layout.add_widget(button_layout)  # Добавляем кнопки в основной контейнер
+
+    trade_popup = Popup(title="Торговля", content=trade_layout, size_hint=(0.8, 0.8))
+
+    buy_btn.bind(on_press=lambda x: game_instance.trade_food('buy'))
+    sell_btn.bind(on_press=lambda x: game_instance.trade_food('sell'))
+
+    trade_popup.open()
+
+    # Обновление графика при закрытии попапа
+    trade_popup.bind(on_dismiss=lambda instance: update_food_price_graph(game_instance, img))
+
+def update_food_price_graph(game_instance, img):
+    """Обновление графика цен на еду"""
+    plot_data = game_instance.plot_food_price()  # Генерируем новое изображение графика
+    with open('food_price.png', 'wb') as f:
+        f.write(plot_data)  # Сохраняем изображение
+    img.source = 'food_price.png'  # Обновляем источник изображения
+    img.reload()  # Перезагружаем изображение для обновления отображения
+
+
+
 
 def open_tax_popup(faction):
     """Открытие попапа для выбора ставки налога через выпадающий список"""
@@ -401,6 +505,6 @@ def start_economy_mode(faction, game_area):
 
     # Привязываем кнопку "Построить здание" к функции открытия попапа
     build_btn.bind(on_press=lambda x: open_build_popup(faction))
-
-    # Привязываем кнопку "Управление налогами"
     tax_btn.bind(on_press=lambda x: open_tax_popup(faction))
+    trade_btn.bind(on_press=lambda x: open_trade_popup(faction))
+
