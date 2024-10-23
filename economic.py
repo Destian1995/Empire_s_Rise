@@ -155,14 +155,18 @@ class Faction:
         """Списывает деньги, если их хватает, и возвращает True, иначе False."""
         if self.money >= money:
             self.money -= money
-            self.resources['Кроны'] = self.money
             return True
         else:
             return False
 
+    def update_cash(self):
+        self.resources['Кроны'] = self.money
+        return self.resources
+
     def update_resources(self):
-        """Обновление текущих ресурсов, с проверкой на минимальное значение 0."""
+        """Обновление текущих ресурсов, с проверкой на минимальное значение 0 и округлением до целых чисел."""
         self.update_buildings()
+
         # Коэффициенты для каждой фракции
         faction_coefficients = {
             'Аркадия': {'free_peoples_gain': 190, 'free_peoples_loss': 30, 'money_loss': 100, 'food_gain': 600,
@@ -185,38 +189,38 @@ class Faction:
         coeffs = faction_coefficients[faction]
 
         # Обновление ресурсов с учетом коэффициентов
-        self.free_peoples += (self.hospitals * 500) - (self.factories * 200)
-        self.born_peoples = self.hospitals * 500
-        self.work_peoples = self.factories * 200
-        self.money += self.calculate_tax_income() - (self.hospitals * coeffs['money_loss'])
-        self.money_info = self.hospitals * coeffs['money_loss']
-        self.money_up = self.calculate_tax_income() - (self.hospitals * coeffs['money_loss'])
-        self.taxes_info = self.calculate_tax_income()
+        self.free_peoples += int((self.hospitals * 500) - (self.factories * 200))
+        self.born_peoples = int(self.hospitals * 500)
+        self.work_peoples = int(self.factories * 200)
+        self.money += int(self.calculate_tax_income() - (self.hospitals * coeffs['money_loss']))
+        self.money_info = int(self.hospitals * coeffs['money_loss'])
+        self.money_up = int(self.calculate_tax_income() - (self.hospitals * coeffs['money_loss']))
+        self.taxes_info = int(self.calculate_tax_income())
 
         # Учитываем, что одна фабрика может прокормить 1000 людей
-        self.food += (self.factories * 1000) - (self.population * coeffs['food_loss'])
-        self.food_info = (self.factories * 1000) - (self.population * coeffs['food_loss'])
-        self.food_peoples = (self.population * coeffs['food_loss'])
+        self.food += int((self.factories * 1000) - (self.population * coeffs['food_loss']))
+        self.food_info = int((self.factories * 1000) - (self.population * coeffs['food_loss']))
+        self.food_peoples = int(self.population * coeffs['food_loss'])
 
         # Проверяем, будет ли население увеличиваться
         if self.food > 0:
-            self.population += self.free_peoples  # Увеличиваем население только если есть еда
+            self.population += int(self.free_peoples)  # Увеличиваем население только если есть еда
         else:
             # Логика убыли населения при недостатке еды
             if self.population > 100:
                 loss = int(self.population * 0.45)  # 45% от населения
                 self.population -= loss
             else:
-                loss = min(self.population, 50)  # Обнуление по 25, но не ниже 0
+                loss = min(self.population, 50)  # Обнуление по 50, но не ниже 0
                 self.population -= loss
             self.free_peoples = 0  # Все рабочие обнуляются, так как еды нет
 
         # Проверка, чтобы ресурсы не опускались ниже 0
         self.resources.update({
-            "Кроны": max(self.money, 0),
-            "Рабочие": max(self.free_peoples, 0),
-            "Еда": max(self.food, 0),
-            "Население": max(self.population, 0)
+            "Кроны": max(int(self.money), 0),
+            "Рабочие": max(int(self.free_peoples), 0),
+            "Еда": max(int(self.food), 0),
+            "Население": max(int(self.population), 0)
         })
 
         print(f"Ресурсы обновлены: {self.resources}, Больницы: {self.hospitals}, Фабрики: {self.factories}")
@@ -247,17 +251,17 @@ def build_structure(building, city, faction):
         return
 
     if building == "Фабрика":
-        if faction.cash_build(200):
+        if faction.cash_build(100):
             faction.build_factory(city)
             show_success_message(building, city)
         else:
-            show_error_message("Недостаточно денег для постройки фабрики! \n Стоимость фабрики 200 крон")
+            show_error_message("Недостаточно денег для постройки фабрики! \n  Стоимость фабрики 100 крон")
     elif building == "Больница":
-        if faction.cash_build(100):
+        if faction.cash_build(50):
             faction.build_hospital(city)
             show_success_message(building, city)
         else:
-            show_error_message("Недостаточно денег для постройки больницы! \n Стоимость больницы 100 крон")
+            show_error_message("Недостаточно денег для постройки больницы! \n  Стоимость больницы 50 крон")
 
 
 # Функция открытия окна постройки зданий

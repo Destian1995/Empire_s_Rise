@@ -7,7 +7,9 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.graphics import Color, Ellipse, Rectangle
-
+from kivy.clock import Clock
+import threading
+import time
 import economic
 # Файл, который включает режимы игры
 from economic import Faction
@@ -77,6 +79,9 @@ class GameScreen(Screen):
         # Инициализация UI
         self.init_ui()
 
+        # Запускаем обновление ресурсов каждые 3 секунд
+        Clock.schedule_interval(self.update_cash, 3)
+
     def init_ui(self):
         # панель с выбранной фракцией
         self.faction_label = Label(
@@ -123,6 +128,13 @@ class GameScreen(Screen):
         # Инициализация ИИ для остальных фракций
         self.init_ai_controllers()
 
+    def update_cash(self, dt):
+        """Обновление текущего капитала фракции через каждые 15 секунд"""
+        self.faction.update_cash()
+
+        # Обновляем отображение в ResourceBox
+        self.resource_box.update_resources()
+
     def switch_to_economy(self, instance):
         """Переключение на экономический режим"""
         self.clear_game_area()
@@ -155,5 +167,3 @@ class GameScreen(Screen):
 
         # Обновляем отображение в ResourceBox
         self.resource_box.update_resources()
-
-
