@@ -70,6 +70,7 @@ class Faction:
         self.money_up = 0
         self.taxes_info = 0
         self.food_peoples = 0
+        self.tax_effects = 0
         self.food_price_history = []  # История цен на еду
         self.current_food_price = 0  # Текущая цена на еду
         self.turns = 0  # Счетчик ходов
@@ -111,6 +112,27 @@ class Faction:
         self.custom_tax_rate = self.get_base_tax_rate() * new_tax_rate   # Применяем процент к базовой ставке
         self.tax_set = True
         self.calculate_tax_income()
+
+    def tax_effect(self, tax_rate):
+        if 50 > tax_rate >= 35:
+            return -250
+        elif 75 > tax_rate >= 50:
+            return -8000
+        elif 90 > tax_rate >= 75:
+            return -22500
+        elif tax_rate >= 90:
+            return -70000
+        elif 15 > tax_rate:
+            return 450
+        else:
+            return 90
+
+    def apply_tax_effect(self, tax_rate):
+        # Рассчитать и применить эффект налогов на население
+        effect = self.tax_effect(tax_rate)
+        self.tax_effects = effect
+        return effect
+
 
     def calculate_base_tax_rate(self, tax_rate):
         """Формула расчёта базовой налоговой ставки для текущей фракции."""
@@ -212,7 +234,7 @@ class Faction:
         coeffs = faction_coefficients[faction]
 
         # Обновление ресурсов с учетом коэффициентов
-        self.free_peoples += int((self.hospitals * 500) - (self.factories * 200))
+        self.free_peoples += int((self.hospitals * 500) - (self.factories * 200)) + self.tax_effects
         self.born_peoples = int(self.hospitals * 500)
         self.work_peoples = int(self.factories * 200)
         self.money += int(self.calculate_tax_income() - (self.hospitals * coeffs['money_loss']))
@@ -237,6 +259,8 @@ class Faction:
                 loss = min(self.population, 50)  # Обнуление по 50, но не ниже 0
                 self.population -= loss
             self.free_peoples = 0  # Все рабочие обнуляются, так как еды нет
+
+
 
         # Проверка, чтобы ресурсы не опускались ниже 0
         self.resources.update({
@@ -324,12 +348,12 @@ def build_structure(building, city, faction):
 
 # Функция открытия окна постройки зданий
 def open_build_popup(faction):
-    build_popup = Popup(title="Построить здание", size_hint=(0.8, 0.8))
+    build_popup = Popup(title="Состояние государства", size_hint=(0.8, 0.8))
 
     main_layout = FloatLayout()
 
     # Информационный блок с общими показателями ресурсов
-    stats_box = BoxLayout(orientation='vertical', size_hint=(1, 0.5), pos_hint={'x': 0, 'y': 0.1}, padding=[10, 10, 10, 10])
+    stats_box = BoxLayout(orientation='vertical', size_hint=(1, 0.65), pos_hint={'x': 0, 'y': 0.25}, padding=[30, 45, 45, 10])
 
     # Используем TextInput для отображения информации о ресурсах
     stats_info = (
@@ -341,19 +365,21 @@ def open_build_popup(faction):
         f"Количество больниц: {faction.hospitals}\n"
         f"Количество фабрик: {faction.factories}\n"
         f"1 больница дает(за ход): 500 рабочих и требует 100 крон\n"
-        f"1 фабрика дает(за ход): может прокормить 1000 населения, но требует 200 рабочих"
+        f"1 фабрика дает(за ход): может прокормить 1000 населения, но требует 200 рабочих\n"
+        f"Эффект от налогов (Изменение рабочих): {faction.apply_tax_effect(int(faction.current_tax_rate[:-1])) if faction.tax_set else 'Налог не установлен'}\n"
     )
 
-    stats_text_box = TextInput(text=stats_info, readonly=True, size_hint=(1, None), height=200)
-    stats_text_box.background_color = (0.9, 0.9, 0.9, 1)  # Светлый цвет фона
+    # Увеличиваем высоту текстового блока для отображения новой строки
+    stats_text_box = TextInput(text=stats_info, readonly=True, size_hint=(1, None), height=300)
+    stats_text_box.background_color = (0.9, 0.9, 0.9, 1)
     stats_box.add_widget(stats_text_box)
 
     main_layout.add_widget(stats_box)
 
-    # Блок выбора зданий
-    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.05, 'y': 0.6})
+    # Блок выбора зданий (опускаем вниз)
+    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2), pos_hint={'x': 0.05, 'y': 0.05})  # Выровнено по нижнему краю
     building_main_button = Button(text="Здания", size_hint=(1, None), height=44)
-    building_dropdown = DropDown()
+    building_dropdown = DropDown(auto_dismiss=False)
     for building, icon in BUILDINGS.items():
         btn = Button(text=building, size_hint_y=None, height=44)
         btn.bind(on_release=lambda btn: building_dropdown.select(btn.text))
@@ -366,10 +392,10 @@ def open_build_popup(faction):
 
     main_layout.add_widget(building_box)
 
-    # Блок выбора города
-    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.3), pos_hint={'x': 0.35, 'y': 0.6})
+    # Блок выбора города (опускаем вниз)
+    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2), pos_hint={'x': 0.35, 'y': 0.05})  # Выровнено по нижнему краю
     city_main_button = Button(text="Города", size_hint=(1, None), height=44)
-    city_dropdown = DropDown()
+    city_dropdown = DropDown(auto_dismiss=False)
     for city in faction.cities:
         btn = Button(text=city, size_hint_y=None, height=44)
         btn.bind(on_release=lambda btn: city_dropdown.select(btn.text))
@@ -382,8 +408,8 @@ def open_build_popup(faction):
 
     main_layout.add_widget(city_box)
 
-    # Блок кнопки для постройки зданий
-    button_box = BoxLayout(orientation='vertical', size_hint=(0.2, 0.5), pos_hint={'x': 0.7, 'y': 0.6})
+    # Блок кнопки для постройки зданий (опускаем вниз и выравниваем с другими блоками)
+    button_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2), pos_hint={'x': 0.7, 'y': 0.05})  # Выровнено по нижнему краю
     build_button = Button(text="Построить", size_hint=(1, None), height=44)
     build_button.bind(on_release=lambda x: build_structure(building_main_button.text, city_main_button.text, faction))
 
@@ -392,7 +418,6 @@ def open_build_popup(faction):
 
     build_popup.content = main_layout
     build_popup.open()
-
 
 
 #---------------------------------------------------------------
@@ -440,8 +465,6 @@ def update_food_price_graph(game_instance, img):
     img.reload()  # Перезагружаем изображение для обновления отображения
 
 
-
-
 def open_tax_popup(faction):
     """Открытие попапа для выбора ставки налога через выпадающий список"""
 
@@ -465,7 +488,8 @@ def open_tax_popup(faction):
         """Функция для обновления ставки налога при выборе из списка"""
         tax_label.text = f"Текущая ставка налога: {text}"  # Обновляем текст метки при выборе
         tax_rate = int(text[:-1])  # Убираем '%' и приводим к числу
-        faction.set_taxes(tax_rate)  # Устанавливаем ставку налога
+        faction.set_taxes(tax_rate) # Устанавливаем ставку налога
+        faction.apply_tax_effect(tax_rate) # Считаем отрицательный эффект
 
     tax_spinner.bind(text=update_tax_rate)
 
