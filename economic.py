@@ -56,7 +56,7 @@ class Faction:
     def __init__(self, name, cities):
         self.faction = name
         self.cities = cities
-        self.money = 400
+        self.money = 100000
         self.free_peoples = 100
         self.food = 600
         self.population = 100
@@ -87,7 +87,9 @@ class Faction:
             "Халидон": {"tax_rate": 0.01},
         }
 
-        self.generate_food_price()  # Генерация начальной цены на еду
+        self.is_first_run = True  # Флаг для первого запуска
+
+        self.initialize_food_prices()  # Генерация начальной цены на еду
 
     def get_income_per_person(self):
         """Получение дохода с одного человека для данной фракции."""
@@ -274,7 +276,6 @@ class Faction:
 
         print(f"Ресурсы обновлены: {self.resources}, Больницы: {self.hospitals}, Фабрики: {self.factories}")
 
-
     def get_resources(self):
         """Получение текущих ресурсов"""
         return self.resources
@@ -283,14 +284,24 @@ class Faction:
         if self.population == 0:
             return False
 
+    def initialize_food_prices(self):
+        """Инициализация истории цен на еду"""
+        for _ in range(25):  # Генерируем 15 случайных цен
+            self.generate_food_price()
 
     def generate_food_price(self):
         """Генерация случайной цены на еду"""
-        self.current_food_price = random.randint(3000, 47000)
-        self.food_price_history.append(self.current_food_price)
+        if self.turns == 0:  # Если это первый ход
+            self.current_food_price = random.randint(3000, 47000)
+            self.food_price_history.append(self.current_food_price)
+        else:
+            # Генерация новой цены на основе текущей
+            self.current_food_price = self.food_price_history[-1] + random.randint(-2000, 2000)
+            self.current_food_price = max(3000, min(47000, self.current_food_price))  # Ограничиваем диапазон
+            self.food_price_history.append(self.current_food_price)
 
-        # Ограничение длины истории цен до 15 элементов
-        if len(self.food_price_history) > 15:
+        # Ограничение длины истории цен до 25 элементов
+        if len(self.food_price_history) > 25:
             self.food_price_history.pop(0)
 
         self.turns += 1
@@ -301,28 +312,43 @@ class Faction:
             if self.money >= self.current_food_price:
                 self.money -= self.current_food_price
                 self.food += 10000
+                return True  # Операция успешна
             else:
                 show_message("Недостаточно денег", "У вас недостаточно денег для покупки 10000 единиц еды.")
         elif action == 'sell':  # Продажа еды
             if self.food >= 10000:
                 self.money += self.current_food_price
                 self.food -= 10000
+                return True  # Операция успешна
             else:
                 show_message("Недостаточно еды", "У вас недостаточно еды для продажи 10000 единиц.")
+        return False  # Операция не удалась
 
     def plot_food_price(self):
-        """Генерация графика цен на еду"""
+        """Генерация графика цен на еду с темным фоном и зеленым графиком"""
         plt.figure(figsize=(10, 5))
-        plt.plot(self.food_price_history, marker='o')
-        plt.title('История цен на еду за 10000 единиц(бушель)')
-        plt.xlabel('Ходы')
-        plt.ylabel('Цена за бушель (кроны)')
-        plt.grid()
+
+        # Устанавливаем темный фон
+        plt.style.use('dark_background')
+
+        # Генерируем график с зеленым цветом
+        plt.plot(self.food_price_history, marker='o', color='green', label='Историческая цена')
+
+        # Отмечаем текущую цену на графике
+        plt.axhline(y=self.current_food_price, color='red', linestyle='--', label='Текущая цена')
+
+        plt.title('История цен на еду за 10000 единиц (бушель)', color='white')  # Заголовок белого цвета
+        plt.xlabel('Ходы', color='white')  # Подпись оси X белого цвета
+        plt.ylabel('Цена за бушель (кроны)', color='white')  # Подпись оси Y белого цвета
+        plt.grid(color='gray')  # Цвет сетки серый для контраста
+        plt.legend()  # Показываем легенду графика
+
         buf = io.BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format='png', facecolor='black')  # Задаем черный фон для сохраненного изображения
         plt.close()
         buf.seek(0)
         return buf.getvalue()
+
 
 def show_message(title, message):
     layout = BoxLayout(orientation='vertical', padding=10)
@@ -442,15 +468,13 @@ def open_build_popup(faction):
 
 #---------------------------------------------------------------
 
-# Функция для открытия окна торговли
 def open_trade_popup(game_instance):
     """Открытие окна торговли с графиком цен"""
-    game_instance.generate_food_price()  # Генерация новой цены на еду при открытии окна
 
     trade_layout = BoxLayout(orientation='vertical', padding=10)
 
-    # Генерация и сохранение графика как изображения
-    plot_data = game_instance.plot_food_price()
+    # Генерация и сохранение графика как изображения на основе текущей цены
+    plot_data = game_instance.plot_food_price()  # Передаем текущую цену
     with open('food_price.png', 'wb') as f:
         f.write(plot_data)  # Сохранение изображения
 
@@ -468,13 +492,25 @@ def open_trade_popup(game_instance):
 
     trade_popup = Popup(title="Торговля", content=trade_layout, size_hint=(0.8, 0.8))
 
-    buy_btn.bind(on_press=lambda x: game_instance.trade_food('buy'))
-    sell_btn.bind(on_press=lambda x: game_instance.trade_food('sell'))
+    # Обработка покупки еды
+    buy_btn.bind(on_press=lambda x: handle_trade(game_instance, 'buy', trade_popup))
+    # Обработка продажи еды
+    sell_btn.bind(on_press=lambda x: handle_trade(game_instance, 'sell', trade_popup))
 
     trade_popup.open()
 
     # Обновление графика при закрытии попапа
     trade_popup.bind(on_dismiss=lambda instance: update_food_price_graph(game_instance, img))
+
+
+def handle_trade(game_instance, action, trade_popup):
+    """Обработка торговли (покупка/продажа еды)"""
+    result = game_instance.trade_food(action)
+    if result is not None:  # Если торговля прошла успешно
+        show_message("Успех", f"{'Куплено' if action == 'buy' else 'Продано'} 10000 единиц еды.")
+    else:  # Если была ошибка
+        show_message("Ошибка", "Не удалось завершить операцию.")
+    trade_popup.dismiss()  # Закрываем попап после операции
 
 def update_food_price_graph(game_instance, img):
     """Обновление графика цен на еду"""
@@ -483,6 +519,7 @@ def update_food_price_graph(game_instance, img):
         f.write(plot_data)  # Сохраняем изображение
     img.source = 'food_price.png'  # Обновляем источник изображения
     img.reload()  # Перезагружаем изображение для обновления отображения
+
 
 
 def open_tax_popup(faction):
