@@ -14,6 +14,7 @@ from kivy.uix.image import Image
 from kivy.graphics.texture import Texture
 import datetime
 import os
+import json
 import re
 import random
 from kivymd.app import MDApp
@@ -27,6 +28,7 @@ import matplotlib.pyplot as plt
 import io
 
 
+
 def clear_building_log():
     """Очищает данные в файле building_changes.log."""
     with open('files/config/buildings_city.log', 'w') as file:
@@ -35,6 +37,7 @@ def clear_building_log():
 
 # Очищаем файл перед началом программы
 clear_building_log()
+
 
 # Функция для записи изменений в файл
 def log_building_change(faction_name, city, building_type, action, amount):
@@ -76,8 +79,10 @@ class Faction:
         self.turns = 0  # Счетчик ходов
         self.tax_set = False  # Флаг, установлен ли налог
         self.custom_tax_rate = None  # Новый атрибут для хранения пользовательской ставки налога
-        self.cities_buildings = {city: {'hospitals': 0, 'factories': 0} for city in cities}  # Словарь для хранения зданий в городах
-        self.resources = {'Кроны': self.money, 'Рабочие': self.free_peoples, 'Еда': self.food, 'Население': self.population}
+        self.cities_buildings = {city: {'hospitals': 0, 'factories': 0} for city in
+                                 cities}  # Словарь для хранения зданий в городах
+        self.resources = {'Кроны': self.money, 'Рабочие': self.free_peoples, 'Еда': self.food,
+                          'Население': self.population}
         self.economic_params = {
             # Упрощение параметров для улучшения читаемости
             "Аркадия": {"tax_rate": 0.03},
@@ -111,7 +116,7 @@ class Faction:
 
     def set_taxes(self, new_tax_rate):
         """Установка нового уровня налогов и обновление ресурсов."""
-        self.custom_tax_rate = self.get_base_tax_rate() * new_tax_rate   # Применяем процент к базовой ставке
+        self.custom_tax_rate = self.get_base_tax_rate() * new_tax_rate  # Применяем процент к базовой ставке
         self.tax_set = True
         self.calculate_tax_income()
 
@@ -136,7 +141,6 @@ class Faction:
         effect = self.tax_effect(tax_rate)
         self.tax_effects = effect
         return effect
-
 
     def calculate_base_tax_rate(self, tax_rate):
         """Формула расчёта базовой налоговой ставки для текущей фракции."""
@@ -203,7 +207,53 @@ class Faction:
         else:
             return False
 
+    def cash_units(self):
+        """Проверяет ресурсы из файла и обновляет их при найме юнитов."""
+        # Пытаемся прочитать файл ресурсов
+        try:
+            with open('files/config/resources/resources.json', 'r') as file:
+                resources_data = json.load(file)
+
+                # Проверяем, пуст ли файл
+                if not resources_data:
+                    return True  # Возвращаем True, чтобы продолжить процесс, если файл пуст
+
+                required_crowns = resources_data.get('crowns', 0)
+                required_workers = resources_data.get('workers', 0)
+
+        except FileNotFoundError:
+            return False
+        except json.JSONDecodeError:
+            return False
+
+        # Проверяем наличие ресурсов
+        if self.money >= required_crowns and self.free_peoples >= required_workers:
+            self.money -= required_crowns
+            self.free_peoples -= required_workers
+
+            # Очищаем файл ресурсов после успешной проверки и обновления
+            with open('files/config/resources/resources.json', 'w') as file:
+                json.dump({}, file)  # Записываем пустой объект в файл
+
+            self.show_popup("Успех", "Юниты успешно наняты!")
+            return True
+        else:
+            self.show_popup("Ошибка", "Недостаточно ресурсов для найма юнитов.")
+
+            # Очищаем файл ресурсов, если ресурсов недостаточно
+            with open('files/config/resources/resources.json', 'w') as file:
+                json.dump({}, file)  # Записываем пустой объект в файл
+
+            return False
+
+
+    def show_popup(self, title, message):
+        """Отображает всплывающее окно с сообщением."""
+        popup = Popup(title=title, content=Label(text=message), size_hint=(0.6, 0.4))
+        popup.open()
+
     def update_cash(self):
+        self.cash_units()
         self.resources['Кроны'] = self.money
         self.resources['Рабочие'] = self.free_peoples
         self.resources['Еда'] = self.food
@@ -263,8 +313,6 @@ class Faction:
                 loss = min(self.population, 50)  # Обнуление по 50, но не ниже 0
                 self.population -= loss
             self.free_peoples = 0  # Все рабочие обнуляются, так как еды нет
-
-
 
         # Проверка, чтобы ресурсы не опускались ниже 0
         self.resources.update({
@@ -362,15 +410,19 @@ def show_message(title, message):
     close_btn.bind(on_press=popup.dismiss)
     popup.open()
 
+
 # Логика для отображения сообщения об ошибке средств
 def show_error_message(message):
     error_popup = Popup(title="Ошибка", content=Label(text=message), size_hint=(0.5, 0.5))
     error_popup.open()
 
+
 # Логика для успешного строительства
 def show_success_message(building, city):
-    success_popup = Popup(title="Успешно", content=Label(text=f"Здание '{building}' построено в городе '{city}'!"), size_hint=(0.5, 0.5))
+    success_popup = Popup(title="Успешно", content=Label(text=f"Здание '{building}' построено в городе '{city}'!"),
+                          size_hint=(0.5, 0.5))
     success_popup.open()
+
 
 # Функция для постройки здания
 def build_structure(building, city, faction):
@@ -399,7 +451,8 @@ def open_build_popup(faction):
     main_layout = FloatLayout()
 
     # Информационный блок с общими показателями ресурсов
-    stats_box = BoxLayout(orientation='vertical', size_hint=(1, 0.65), pos_hint={'x': 0, 'y': 0.25}, padding=[30, 45, 45, 10])
+    stats_box = BoxLayout(orientation='vertical', size_hint=(1, 0.65), pos_hint={'x': 0, 'y': 0.25},
+                          padding=[30, 45, 45, 10])
 
     # Используем TextInput для отображения информации о ресурсах
     stats_info = (
@@ -423,7 +476,8 @@ def open_build_popup(faction):
     main_layout.add_widget(stats_box)
 
     # Блок выбора зданий (опускаем вниз)
-    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2), pos_hint={'x': 0.05, 'y': 0.05})  # Выровнено по нижнему краю
+    building_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2),
+                             pos_hint={'x': 0.05, 'y': 0.05})  # Выровнено по нижнему краю
     building_main_button = Button(text="Здания", size_hint=(1, None), height=44)
     building_dropdown = DropDown(auto_dismiss=False)
     for building, icon in BUILDINGS.items():
@@ -439,7 +493,8 @@ def open_build_popup(faction):
     main_layout.add_widget(building_box)
 
     # Блок выбора города (опускаем вниз)
-    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2), pos_hint={'x': 0.35, 'y': 0.05})  # Выровнено по нижнему краю
+    city_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2),
+                         pos_hint={'x': 0.35, 'y': 0.05})  # Выровнено по нижнему краю
     city_main_button = Button(text="Города", size_hint=(1, None), height=44)
     city_dropdown = DropDown(auto_dismiss=False)
     for city in faction.cities:
@@ -455,7 +510,8 @@ def open_build_popup(faction):
     main_layout.add_widget(city_box)
 
     # Блок кнопки для постройки зданий (опускаем вниз и выравниваем с другими блоками)
-    button_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2), pos_hint={'x': 0.7, 'y': 0.05})  # Выровнено по нижнему краю
+    button_box = BoxLayout(orientation='vertical', size_hint=(0.3, 0.2),
+                           pos_hint={'x': 0.7, 'y': 0.05})  # Выровнено по нижнему краю
     build_button = Button(text="Построить", size_hint=(1, None), height=44)
     build_button.bind(on_release=lambda x: build_structure(building_main_button.text, city_main_button.text, faction))
 
@@ -512,6 +568,7 @@ def handle_trade(game_instance, action, trade_popup):
         show_message("Ошибка", "Не удалось завершить операцию.")
     trade_popup.dismiss()  # Закрываем попап после операции
 
+
 def update_food_price_graph(game_instance, img):
     """Обновление графика цен на еду"""
     plot_data = game_instance.plot_food_price()  # Генерируем новое изображение графика
@@ -519,7 +576,6 @@ def update_food_price_graph(game_instance, img):
         f.write(plot_data)  # Сохраняем изображение
     img.source = 'food_price.png'  # Обновляем источник изображения
     img.reload()  # Перезагружаем изображение для обновления отображения
-
 
 
 def open_tax_popup(faction):
@@ -545,8 +601,8 @@ def open_tax_popup(faction):
         """Функция для обновления ставки налога при выборе из списка"""
         tax_label.text = f"Текущая ставка налога: {text}"  # Обновляем текст метки при выборе
         tax_rate = int(text[:-1])  # Убираем '%' и приводим к числу
-        faction.set_taxes(tax_rate) # Устанавливаем ставку налога
-        faction.apply_tax_effect(tax_rate) # Считаем отрицательный эффект
+        faction.set_taxes(tax_rate)  # Устанавливаем ставку налога
+        faction.apply_tax_effect(tax_rate)  # Считаем отрицательный эффект
 
     tax_spinner.bind(text=update_tax_rate)
 
@@ -590,4 +646,5 @@ def start_economy_mode(faction, game_area):
     build_btn.bind(on_press=lambda x: open_build_popup(faction))
     tax_btn.bind(on_press=lambda x: open_tax_popup(faction))
     trade_btn.bind(on_press=lambda x: open_trade_popup(faction))
+
 
