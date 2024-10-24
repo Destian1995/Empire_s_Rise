@@ -313,7 +313,7 @@ class Faction:
             "Еда": max(int(self.food), 0),
             "Население": max(int(self.population), 0)
         })
-
+        self.save_resources()
         print(f"Ресурсы обновлены: {self.resources}, Больницы: {self.hospitals}, Фабрики: {self.factories}")
 
     def get_resources(self):
