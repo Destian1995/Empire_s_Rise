@@ -1,0 +1,35 @@
+{
+  "arkadia": {
+    "Гвардия": "files/army/arkadia/gvardia.jpg",
+    "Вепрь": "files/army/arkadia/vepr.jpg",
+    "Циклон - С": "files/army/arkadia/ciclon-s.jpg",
+    "МИГ - 90": "files/army/arkadia/mig-90.jpg"
+  },
+  "celestia": {
+    "Гренадеры": "files/army/celestia/grenader.jpg",
+    "Рысь": "files/army/celestia/lynx.jpg",
+    "ВСО Шторм": "files/army/celestia/VSO.jpg",
+    "С-19": "files/army/celestia/S-19.jpg"
+  },
+  "eteria": {
+    "Легионеры": "files/army/eteria/legions.jpg",
+    "Тигр": "files/army/eteria/tiger.jpg",
+    "Смерч": "files/army/eteria/smerh.jpg",
+    "Д-400": "files/army/eteria/d-400.jpg",
+	"Дракон": "files/army/eteria/dracon.jpg"
+  },
+  "giperion": {
+    "Преторианцы": "files/army/giperion/pretorian.jpg",
+    "B.M. - 390.S": "files/army/giperion/BM390.jpg",
+    "Варвар - B.S.": "files/army/giperion/varvar.jpg",
+    "WS.120 - Валькирия": "files/army/giperion/valkirya.jpg",
+	"CPS - 12 'Молот Тора'": "files/army/giperion/CPS-12.jpg",
+	"К-17": "files/army/giperion/k-17.jpg"
+  },
+  "halidon": {
+    "Тени": "files/army/halidon/shadows.jpg",
+    "Бронецикл - 'Орел - 14'": "files/army/halidon/bronecilcl.jpg",
+    "Молот Султана": "files/army/halidon/sultan.jpg",
+    "БПЛА - Shaheed": "files/army/halidon/bpla.jpg"
+  }
+}

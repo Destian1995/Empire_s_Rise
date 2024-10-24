@@ -1,7 +1,7 @@
 {
   "Гренадеры": {
     "cost": [280, 1],
-    "image": "files/army/celestia/soldier.jpg",
+    "image": "files/army/celestia/grenader.jpg",
     "stats": {
       "Урон против наземных юнитов": 85,
       "Урон против воздушных юнитов": 30,
@@ -13,7 +13,7 @@
   },
   "Рысь": {
     "cost": [650, 7],
-    "image": "files/army/celestia/track.jpg",
+    "image": "files/army/celestia/lynx.jpg",
     "stats": {
       "Урон против наземных юнитов": 300,
       "Урон против воздушных юнитов": 100,
@@ -25,7 +25,7 @@
   },
    "ВСО Шторм": {
     "cost": [500, 4],
-    "image": "files/army/celestia/155.jpg",
+    "image": "files/army/celestia/VSO.jpg",
     "stats": {
       "Урон против наземных юнитов": 570,
       "Урон против воздушных юнитов": 10,
@@ -37,7 +37,7 @@
   },
   "С-19": {
     "cost": [2000, 35],
-    "image": "files/army/celestia/pvo.jpg",
+    "image": "files/army/celestia/S-19.jpg",
     "stats": {
       "Урон против наземных юнитов": 120,
       "Урон против воздушных юнитов": 500,

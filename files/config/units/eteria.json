@@ -1,7 +1,7 @@
 {
   "Легионеры": {
     "cost": [120, 1],
-    "image": "files/army/eteria/soldier.jpg",
+    "image": "files/army/eteria/legions.jpg",
     "stats": {
       "Урон против наземных юнитов": 65,
       "Урон против воздушных юнитов": 30,
@@ -13,7 +13,7 @@
   },
   "Тигр": {
     "cost": [300, 4],
-    "image": "files/army/eteria/track.jpg",
+    "image": "files/army/eteria/tiger.jpg",
     "stats": {
       "Урон против наземных юнитов": 190,
       "Урон против воздушных юнитов": 100,
@@ -25,7 +25,7 @@
   },
    "Смерч": {
     "cost": [600, 12],
-    "image": "files/army/eteria/push.jpg",
+    "image": "files/army/eteria/smerh.jpg",
     "stats": {
       "Урон против наземных юнитов": 670,
       "Урон против воздушных юнитов": 10,
@@ -37,7 +37,7 @@
   },
   "Д-400": {
     "cost": [1600, 20],
-    "image": "files/army/eteria/pvo.jpg",
+    "image": "files/army/eteria/d-400.jpg",
     "stats": {
       "Урон против наземных юнитов": 50,
       "Урон против воздушных юнитов": 650,
@@ -49,7 +49,7 @@
   },
   "Дракон": {
     "cost": [2600, 25],
-    "image": "files/army/eteria/bombolet.jpg",
+    "image": "files/army/eteria/dracon.jpg",
     "stats": {
       "Урон против наземных юнитов": 600,
       "Урон против воздушных юнитов": 130,

@@ -60,9 +60,9 @@ class Faction:
         self.faction = name
         self.cities = cities
         self.money = 100000
-        self.free_peoples = 100
-        self.food = 600
-        self.population = 100
+        self.free_peoples = 100000
+        self.food = 600000
+        self.population = 100000
         self.hospitals = 0
         self.factories = 0
         self.taxes = 0

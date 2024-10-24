@@ -1,7 +1,7 @@
 {
   "Гвардия": {
     "cost": [350, 1],
-    "image": "files/army/arkadia/soldier.jpg",
+    "image": "files/army/arkadia/gvardia.jpg",
     "stats": {
       "Урон против наземных юнитов": 105,
       "Урон против воздушных юнитов": 40,
@@ -13,7 +13,7 @@
   },
   "Вепрь": {
     "cost": [750, 7],
-    "image": "files/army/arkadia/track.jpg",
+    "image": "files/army/arkadia/vepr.jpg",
     "stats": {
       "Урон против наземных юнитов": 250,
       "Урон против воздушных юнитов": 100,
@@ -25,7 +25,7 @@
   },
   "Циклон - С": {
     "cost": [800, 10],
-    "image": "files/army/arkadia/push.jpg",
+    "image": "files/army/arkadia/ciclon-s.jpg",
     "stats": {
       "Урон против наземных юнитов": 760,
       "Урон против воздушных юнитов": 20,
@@ -37,7 +37,7 @@
   },
   "МИГ - 90": {
     "cost": [3500, 45],
-    "image": "files/army/arkadia/istrebitel.jpg",
+    "image": "files/army/arkadia/mig-90.jpg",
     "stats": {
       "Урон против наземных юнитов": 550,
       "Урон против воздушных юнитов": 1200,

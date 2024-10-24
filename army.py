@@ -24,6 +24,7 @@ class ArmyCash:
     def __init__(self, faction):
         self.faction = faction
         self.resources_file = 'files/config/resources/resources.json'  # Путь к файлу ресурсов
+        self.units_file = 'files/config/arms/arms.json'  # Путь к файлу юнитов
 
     def hire_unit(self, unit_name, unit_cost, quantity):
         """Записывает ресурсы для найма юнита в файл."""
@@ -37,9 +38,16 @@ class ArmyCash:
             'workers': required_workers
         }
 
+        unit_data = {
+            'name': unit_name,
+            'count': quantity,
+        }
         # Запись данных в файл
         with open(self.resources_file, 'w') as file:
             json.dump(resources_data, file)
+
+        with open(self.units_file, 'w') as file:
+            json.dump(unit_data, file)
 
         print(f"Юнит {unit_name} нанят! Необходимые ресурсы: {resources_data}.")
         return True  # Возвращаем успех
@@ -164,17 +172,146 @@ def switch_to_politics(faction, game_area):
     politic.start_politic_mode(faction, game_area)
 
 
+def load_image_data():
+    """Загружает информацию об изображениях юнитов из image.json."""
+    image_json_path = 'files/config/arms/image.json'
+
+    # Проверка существования файла
+    if not os.path.exists(image_json_path):
+        raise FileNotFoundError(f"Файл {image_json_path} не найден.")
+
+    # Проверка на пустой файл
+    if os.path.getsize(image_json_path) == 0:
+        raise ValueError(f"Файл {image_json_path} пустой.")
+
+    with open(image_json_path, 'r', encoding='utf-8') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Ошибка при чтении файла {image_json_path}: {e}")
+
+
+def load_units_data(faction):
+    """Загружает информацию о юнитах для указанной фракции из arms.json."""
+    with open('files/config/arms/arms.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        print(f"Название: {data['name']}")
+        print(f"Количество: {data['count']}")
+        return data.get(faction, {})
+
+
+def show_army_headquarters(faction):
+    """Показать окно генштаба с информацией о юнитах."""
+    unit_data = load_units_data(faction)
+    english_faction = faction_translation.get(faction, faction)
+
+    # Загрузка данных о путях к изображениям из image.json
+    image_data = load_image_data()
+
+    unit_popup = Popup(title="Генштаб", size_hint=(0.9, 0.9))
+
+    # Создаем основной layout
+    main_layout = BoxLayout(orientation='vertical')
+
+    # Верхний апплет для не расквартированных юнитов
+    unassigned_layout = BoxLayout(orientation='vertical', size_hint_y=0.5, padding=(10, 10, 10, 10))
+
+    unassigned_label = Label(text="Не расквартированные юниты", size_hint_y=None, height=40)
+    unassigned_layout.add_widget(unassigned_label)
+
+    # Цикл по юнитам, чтобы создать элементы интерфейса для каждого юнита
+    for unit_name, unit_info in unit_data.items():
+        if 'count' not in unit_info:
+            print(f"Ошибка: информация о юните '{unit_name}' не содержит 'count'")
+            continue  # Пропускаем данный юнит, если отсутствует количество
+
+        unit_image = image_data.get(english_faction, {}).get(unit_name, "files/army/default.jpg")
+
+        unit_icon = Image(source=unit_image, size_hint=(0.2, 1))
+        unit_count = Label(text=f"Количество: {unit_info['count']}", size_hint=(0.2, 1))
+
+        garrison_button = Button(text="Расквартировать", size_hint=(0.2, 1))
+        garrison_button.bind(on_release=lambda instance, name=unit_name, count=unit_info['count']: garrison_units(name, count))
+
+        unit_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=50)
+        unit_box.add_widget(unit_icon)
+        unit_box.add_widget(unit_count)
+        unit_box.add_widget(garrison_button)
+
+        unassigned_layout.add_widget(unit_box)
+
+    main_layout.add_widget(unassigned_layout)
+
+    # Нижний апплет для расквартированных юнитов
+    assigned_layout = BoxLayout(orientation='vertical', size_hint_y=0.5, padding=(10, 10, 10, 10))
+    assigned_label = Label(text="Расквартированные юниты", size_hint_y=None, height=40)
+    assigned_layout.add_widget(assigned_label)
+
+    # Здесь можно добавить логику отображения расквартированных юнитов
+    main_layout.add_widget(assigned_layout)
+
+    unit_popup.content = main_layout
+    unit_popup.open()
+
+
+def garrison_units(unit_name, available_count):
+    """Обрабатывает расквартирование юнитов."""
+    garrison_popup = Popup(title="Выбор города", size_hint=(0.8, 0.4))
+
+    # Список городов, в которых можно расквартировать юниты (пример)
+    cities = ["Город 1", "Город 2", "Город 3"]
+
+    city_layout = BoxLayout(orientation='vertical', padding=(10, 10, 10, 10))
+
+    city_label = Label(text=f"Расквартировать {unit_name}, доступно: {available_count}", size_hint_y=None, height=40)
+    city_layout.add_widget(city_label)
+
+    # Создаем выпадающий список для выбора города
+    city_dropdown = TextInput(hint_text="Введите название города", size_hint_y=None, height=40)
+    city_layout.add_widget(city_dropdown)
+
+    # Поле ввода для количества юнитов
+    quantity_input = TextInput(hint_text="Количество юнитов", size_hint_y=None, height=40)
+    city_layout.add_widget(quantity_input)
+
+    def confirm_garrison(instance):
+        """Подтверждает расквартирование юнитов."""
+        city_name = city_dropdown.text
+        quantity = quantity_input.text
+        if not city_name or not quantity.isdigit() or int(quantity) <= 0:
+            print("Введите корректные данные.")
+            return
+
+        quantity = int(quantity)
+        if quantity > available_count:
+            print("Недостаточно юнитов для расквартирования.")
+            return
+
+        # Логика для расквартирования юнитов
+        print(f"{quantity} юнитов {unit_name} расквартированы в {city_name}.")
+
+        garrison_popup.dismiss()
+
+    confirm_button = Button(text="Подтвердить", size_hint_y=None, height=40)
+    confirm_button.bind(on_release=confirm_garrison)
+    city_layout.add_widget(confirm_button)
+
+    garrison_popup.content = city_layout
+    garrison_popup.open()
+
+
 def start_army_mode(faction, game_area):
-    """Инициализация армейского режима для выбранной фракции"""
+    """Инициализация армейского режима для выбранной фракции."""
     army_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), pos_hint={'x': 0, 'y': 0})
 
     train_btn = Button(text="Тренировка войск", size_hint_x=0.33, size_hint_y=None, height=50)
-    attack_btn = Button(text="Генштаб", size_hint_x=0.33, size_hint_y=None, height=50)
+    headquarters_btn = Button(text="Генштаб", size_hint_x=0.33, size_hint_y=None, height=50)
     defend_btn = Button(text="Управление дб. оружием", size_hint_x=0.33, size_hint_y=None, height=50)
 
     army_layout.add_widget(train_btn)
-    army_layout.add_widget(attack_btn)
+    army_layout.add_widget(headquarters_btn)
     army_layout.add_widget(defend_btn)
     game_area.add_widget(army_layout)
 
     train_btn.bind(on_release=lambda x: show_unit_selection(faction))
+    headquarters_btn.bind(on_release=lambda x: show_army_headquarters(faction))

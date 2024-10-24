@@ -1,7 +1,7 @@
 {
   "Тени": {
     "cost": [70, 1],
-    "image": "files/army/halidon/soldier.jpg",
+    "image": "files/army/halidon/shadows.jpg",
     "stats": {
       "Урон против наземных юнитов": 75,
       "Урон против воздушных юнитов": 30,
@@ -25,7 +25,7 @@
   },
    "Молот Султана": {
     "cost": [350, 15],
-    "image": "files/army/halidon/push.jpg",
+    "image": "files/army/halidon/sultan.jpg",
     "stats": {
       "Урон против наземных юнитов": 400,
       "Урон против воздушных юнитов": 10,
