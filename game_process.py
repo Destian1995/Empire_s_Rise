@@ -79,8 +79,8 @@ class GameScreen(Screen):
         # Инициализация UI
         self.init_ui()
 
-        # Запускаем обновление ресурсов каждые 3 секунд
-        Clock.schedule_interval(self.update_cash, 3)
+        # Запускаем обновление ресурсов каждые 2 секунды
+        Clock.schedule_interval(self.update_cash, 2)
 
     def init_ui(self):
         # панель с выбранной фракцией
