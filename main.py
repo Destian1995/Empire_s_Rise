@@ -119,6 +119,18 @@ def load_kingdom_data(file_path):
     return data
 
 
+def clear_temp_files():
+    # Очищаем содержимое файла arms.json
+    temp_file = 'files/config/arms/arms.json'
+    with open(temp_file, 'w', encoding='utf-8') as file:
+        file.write('')  # Записываем пустую строку, чтобы очистить файл
+
+
+def get_top_scores():
+    # Загружаем данные из файла
+    file_path = os.path.join('files', 'config', 'city.md')
+    data = load_kingdom_data(file_path)
+
 class HallOfFameWidget(FloatLayout):
     def __init__(self, **kwargs):
         super(HallOfFameWidget, self).__init__(**kwargs)
@@ -440,6 +452,8 @@ class KingdomSelectionWidget(FloatLayout):
         # Получаем города и крепости для выбранного княжества
         cities = data['territory_owners'][selected_kingdom]['fortresses']
 
+        # Очистка временных файлов
+        clear_temp_files()
         # Передаем выбранное княжество на новый экран игры
         game_screen = GameScreen(selected_kingdom, cities)
         app.root.clear_widgets()

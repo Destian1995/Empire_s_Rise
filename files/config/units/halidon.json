@@ -11,7 +11,7 @@
       "Индекс эффективности": "6 из 50"
     }
   },
-  "Бронецикл - 'Орел - 14'": {
+  "Бронецикл BRB5": {
     "cost": [230, 5],
     "image": "files/army/halidon/bronecilcl.jpg",
     "stats": {
@@ -35,7 +35,7 @@
       "Индекс эффективности": "25 из 50"
     }
   },
-  "БПЛА - Shaheed": {
+  "БПЛА - ZULU": {
     "cost": [550, 20],
     "image": "files/army/halidon/bpla.jpg",
     "stats": {
