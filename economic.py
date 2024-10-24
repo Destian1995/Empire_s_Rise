@@ -59,10 +59,10 @@ class Faction:
     def __init__(self, name, cities):
         self.faction = name
         self.cities = cities
-        self.money = 10000000
-        self.free_peoples = 10000000
-        self.food = 60000000
-        self.population = 10000000
+        self.money = 100000
+        self.free_peoples = 1000
+        self.food = 6000
+        self.population = 1000
         self.hospitals = 0
         self.factories = 0
         self.taxes = 0
@@ -207,56 +207,48 @@ class Faction:
         else:
             return False
 
-    def cash_units(self):
-        """Проверяет ресурсы из файла и обновляет их при найме юнитов."""
-        # Пытаемся прочитать файл ресурсов
-        try:
-            with open('files/config/resources/resources.json', 'r') as file:
-                resources_data = json.load(file)
-
-                # Проверяем, пуст ли файл
-                if not resources_data:
-                    return True  # Возвращаем True, чтобы продолжить процесс, если файл пуст
-
-                required_crowns = resources_data.get('crowns', 0)
-                required_workers = resources_data.get('workers', 0)
-
-        except FileNotFoundError:
-            return False
-        except json.JSONDecodeError:
-            return False
-
-        # Проверяем наличие ресурсов
-        if self.money >= required_crowns and self.free_peoples >= required_workers:
-            self.money -= required_crowns
-            self.free_peoples -= required_workers
-
-            # Очищаем файл ресурсов после успешной проверки и обновления
-            with open('files/config/resources/resources.json', 'w') as file:
-                json.dump({}, file)  # Записываем пустой объект в файл
-
-            self.show_popup("Успех", "Юниты успешно наняты!")
-            return True
-        else:
-            self.show_popup("Ошибка", "Недостаточно ресурсов для найма юнитов.")
-
-            # Очищаем файл ресурсов, если ресурсов недостаточно
-            with open('files/config/resources/resources.json', 'w') as file:
-                json.dump({}, file)  # Записываем пустой объект в файл
-
-            return False
-
-
     def show_popup(self, title, message):
         """Отображает всплывающее окно с сообщением."""
         popup = Popup(title=title, content=Label(text=message), size_hint=(0.6, 0.4))
         popup.open()
 
+    def save_resources(self):
+        """Записывает текущее состояние ресурсов в файл."""
+        resources_data = {
+            'Кроны': self.money,
+            'Рабочие': self.free_peoples,
+            'Еда': self.food,
+            'Население': self.population
+        }
+
+        try:
+            with open('files/config/resources/cash.json', 'w') as file:
+                json.dump(resources_data, file, ensure_ascii=False, indent=4)  # Запись с индентацией для удобства
+        except Exception as e:
+            print(f"Ошибка при сохранении ресурсов: {e}")
+
+    def load_resources(self):
+        """Загружает состояние ресурсов из файла и обновляет параметры."""
+        if os.path.exists('files/config/resources/cash.json'):
+            try:
+                with open('files/config/resources/cash.json', 'r') as file:
+                    resources_data = json.load(file)
+                    # Обновляем атрибуты из загруженных данных
+                    self.money = resources_data.get('Кроны', 0)
+                    self.free_peoples = resources_data.get('Рабочие', 0)
+                    self.food = resources_data.get('Еда', 0)
+                    self.population = resources_data.get('Население', 0)
+            except json.JSONDecodeError:
+                print("Ошибка при загрузке ресурсов: файл пуст или повреждён.")
+        else:
+            print("Файл ресурсов не найден.")
+
     def update_cash(self):
-        self.cash_units()
+        self.load_resources()
         self.resources['Кроны'] = self.money
         self.resources['Рабочие'] = self.free_peoples
         self.resources['Еда'] = self.food
+        self.save_resources()
         return self.resources
 
     def update_resources(self):

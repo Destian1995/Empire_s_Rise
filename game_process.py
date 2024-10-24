@@ -79,8 +79,8 @@ class GameScreen(Screen):
         # Инициализация UI
         self.init_ui()
 
-        # Запускаем обновление ресурсов каждые 2 секунды
-        Clock.schedule_interval(self.update_cash, 2)
+        # Запускаем обновление ресурсов каждые 1.5 секунды
+        Clock.schedule_interval(self.update_cash, 1.5)
 
     def init_ui(self):
         # панель с выбранной фракцией
@@ -131,7 +131,6 @@ class GameScreen(Screen):
     def update_cash(self, dt):
         """Обновление текущего капитала фракции через каждые 15 секунд"""
         self.faction.update_cash()
-
         # Обновляем отображение в ResourceBox
         self.resource_box.update_resources()
 

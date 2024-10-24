@@ -12,6 +12,8 @@ from kivy.uix.scrollview import ScrollView
 from functools import partial
 import json
 import os
+import time
+
 
 faction_translation = {
     "Аркадия": "arkadia",
@@ -21,28 +23,41 @@ faction_translation = {
     "Халидон": "halidon",
 }
 
-# Класс для управления ресурсами армии
 class ArmyCash:
     def __init__(self, faction):
         self.faction = faction
-        self.resources_file = 'files/config/resources/resources.json'  # Путь к файлу ресурсов
+        self.resources_file = 'files/config/resources/resources.json'
+        self.cash_resources = 'files/config/resources/cash.json'
         self.units_file = 'files/config/arms/arms.json'  # Путь к файлу юнитов
+        self.resources = self.load_resources()
+
+    def load_resources(self):
+        """Загружает состояние ресурсов из файла."""
+        if os.path.exists(self.cash_resources):
+            with open(self.cash_resources, 'r') as file:
+                try:
+                    resources = json.load(file)  # Читаем данные один раз
+                    print(resources)  # Печатаем загруженные ресурсы
+                    return resources  # Возвращаем загруженные данные
+                except json.JSONDecodeError:
+                    print("Ошибка при загрузке ресурсов: файл пуст или повреждён.")
 
     def hire_unit(self, unit_name, unit_cost, quantity, image_unit):
-        """Записывает ресурсы для найма юнита в файл."""
+        """Нанимает юнита, если ресурсов достаточно."""
         crowns, workers = unit_cost  # Извлекаем стоимость юнита
         required_crowns = int(crowns) * int(quantity)  # Рассчитываем общее количество необходимых крон
         required_workers = int(workers) * int(quantity)  # Рассчитываем общее количество необходимых рабочих
 
-        # Сохраняем информацию о необходимых ресурсах в файл
-        resources_data = {
-            'crowns': required_crowns,
-            'workers': required_workers
-        }
+        # Проверяем, хватает ли ресурсов
+        if self.resources['Кроны'] < required_crowns or self.resources['Рабочие'] < required_workers:
+            print(f"Нанять юнитов невозможно: недостаточно ресурсов. Необходимые: {required_crowns} крон и {required_workers} рабочих.")
+            return False  # Не хватает ресурсов для найма
 
-        # Запись данных о ресурсах
-        with open(self.resources_file, 'w') as file:
-            json.dump(resources_data, file)
+        # Если ресурсов достаточно, обновляем их
+        self.resources['Кроны'] -= required_crowns
+        self.resources['Рабочие'] -= required_workers
+        with open(self.cash_resources, 'w') as file:
+            json.dump(self.resources, file, ensure_ascii=False, indent=4)  # Запись с индентацией для удобства
 
         # Чтение существующих юнитов из файла
         units_data = {}
@@ -67,7 +82,7 @@ class ArmyCash:
         with open(self.units_file, 'w') as file:
             json.dump(units_data, file)
 
-        print(f"Юнит {unit_name} нанят! Необходимые ресурсы: {resources_data}.")
+        print(f"Юнит {unit_name} нанят! Необходимые ресурсы: {required_crowns} крон и {required_workers} рабочих.")
         return True  # Возвращаем успех
 
 

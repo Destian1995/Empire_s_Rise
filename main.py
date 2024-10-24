@@ -110,7 +110,7 @@ def check_and_create_file():
 
         print("Данные успешно записаны в файл.")
     else:
-        print("Файл уже существует.")
+        pass
 
 
 def load_kingdom_data(file_path):
@@ -122,7 +122,10 @@ def load_kingdom_data(file_path):
 def clear_temp_files():
     # Очищаем содержимое файла arms.json
     temp_file = 'files/config/arms/arms.json'
+    cash_file = 'files/config/resources/cash.json'
     with open(temp_file, 'w', encoding='utf-8') as file:
+        file.write('')  # Записываем пустую строку, чтобы очистить файл
+    with open(cash_file, 'w', encoding='utf-8') as file:
         file.write('')  # Записываем пустую строку, чтобы очистить файл
 
 
